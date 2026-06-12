@@ -11,6 +11,127 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!--
+=================================================================
+ SQL PARA SUPABASE — ejecutar en el SQL Editor de tu proyecto
+=================================================================
+
+-- 1. Tabla usuarios (si no existe)
+create table if not exists public.usuarios (
+  id          bigserial primary key,
+  user_id     uuid references auth.users(id) on delete cascade unique not null,
+  nombre      text not null,
+  documento   text,
+  email       text,
+  direccion   text,
+  telefono    text,
+  whatsapp    text,
+  tipo        text default 'natural',
+  es_admin    boolean default false,
+  created_at  timestamptz default now()
+);
+
+-- 2. Tabla pedidos
+create table if not exists public.pedidos (
+  id              bigserial primary key,
+  invoice_number  text unique not null,
+  user_id         uuid references auth.users(id) on delete cascade not null,
+  items           jsonb not null,
+  total           numeric not null,
+  payment_method  text,
+  status          text default 'Pendiente',
+  nota            text,
+  fecha           timestamptz default now()
+);
+
+-- 3. Tabla ventas_directas
+create table if not exists public.ventas_directas (
+  id               bigserial primary key,
+  user_id          uuid references auth.users(id) on delete cascade not null,
+  cant             integer not null,
+  tipo_nombre      text,
+  precio_unitario  numeric,
+  total            numeric,
+  nota             text,
+  fecha            timestamptz default now()
+);
+
+-- 4. Tabla sugerencias
+create table if not exists public.sugerencias (
+  id       bigserial primary key,
+  nombre   text,
+  email    text,
+  mensaje  text,
+  fecha    timestamptz default now()
+);
+
+-- RLS
+alter table public.usuarios        enable row level security;
+alter table public.pedidos         enable row level security;
+alter table public.ventas_directas enable row level security;
+alter table public.sugerencias     enable row level security;
+
+-- Políticas (ajustar según necesidades)
+-- Usuarios: propio o admin
+create policy "usuario_propio" on public.usuarios for all using (auth.uid() = user_id);
+create policy "admin_todos_usuarios" on public.usuarios for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
+
+-- Pedidos: propio o admin
+create policy "pedido_propio" on public.pedidos for all using (auth.uid() = user_id);
+create policy "admin_todos_pedidos" on public.pedidos for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
+
+-- Ventas directas: solo admin
+create policy "admin_ventas_directas" on public.ventas_directas for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
+
+-- Sugerencias: cualquiera inserta, solo admin lee
+create policy "cualquiera_inserta" on public.sugerencias for insert with check (true);
+create policy "admin_lee_sugerencias" on public.sugerencias for select using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
+
+-- TRIGGER AUTOMÁTICO (guarda todos los campos del formulario)
+-- Eliminar si ya existe
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user();
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.usuarios (
+    user_id,
+    nombre,
+    documento,
+    telefono,
+    whatsapp,
+    direccion,
+    tipo,
+    email,
+    es_admin
+  )
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'nombre', ''),
+    coalesce(new.raw_user_meta_data->>'documento', ''),
+    coalesce(new.raw_user_meta_data->>'telefono', ''),
+    coalesce(new.raw_user_meta_data->>'whatsapp', ''),
+    coalesce(new.raw_user_meta_data->>'direccion', ''),
+    coalesce(new.raw_user_meta_data->>'tipo', 'natural'),
+    new.email,
+    false
+  );
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+=================================================================
+-->
+
 <style>
 /* ====================== ROOT ====================== */
 :root {
@@ -440,30 +561,24 @@ async function dbLogin(email, pass) {
   return data.user;
 }
 async function dbRegister(email, pass, ud) {
-  // Crear usuario en auth con nombre en metadata
+  // 🔥 REGISTRO COMPLETO: todos los campos se envían en metadata
   const { data, error } = await window.supabase.auth.signUp({
-    email, password: pass,
-    options: { data: { nombre: ud.nombre } }
+    email,
+    password: pass,
+    options: {
+      data: {
+        nombre: ud.nombre,
+        documento: ud.documento,
+        telefono: ud.telefono,
+        whatsapp: ud.whatsapp,
+        direccion: ud.direccion,
+        tipo: ud.tipo
+      }
+    }
   });
   if (error) throw error;
   if (!data.user) throw new Error('No se pudo crear el usuario. Verifica el correo.');
-  // Esperar un poco para que el trigger inserte el registro básico
-  await new Promise(r => setTimeout(r, 900));
-  // Actualizar el perfil con todos los campos adicionales
-  const { error: updateErr } = await window.supabase.from('usuarios').update({
-    nombre: ud.nombre, documento: ud.documento,
-    direccion: ud.direccion, telefono: ud.telefono,
-    whatsapp: ud.whatsapp, tipo: ud.tipo,
-  }).eq('user_id', data.user.id);
-  if (updateErr) {
-    // Si falla el update (por ejemplo, si el trigger no creó el registro), intentar insert directo
-    const { error: insertErr } = await window.supabase.from('usuarios').insert({
-      user_id: data.user.id, nombre: ud.nombre, documento: ud.documento,
-      email, direccion: ud.direccion, telefono: ud.telefono,
-      whatsapp: ud.whatsapp, tipo: ud.tipo, es_admin: false,
-    });
-    if (insertErr) throw new Error('Error al guardar perfil: ' + insertErr.message);
-  }
+  // No se necesita setTimeout ni update adicional. El trigger hará todo.
   return data.user;
 }
 async function dbProfile(uid) {
@@ -867,7 +982,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody><tr></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></tr></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -1160,7 +1275,7 @@ async function renderAdminUsuarios(cont) {
   cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
   const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
   const tbody = $('#usersTableBody');
-  tbody.innerHTML = G.usersAll.map(u => `<tr><td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td><td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td><td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td><td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td><td><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td></td>`).join('');
+  tbody.innerHTML = G.usersAll.map(u => `<td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td><td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td><td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td><td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td><td style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
 }
 window.adminSaveUser = async (uid) => {
   const nombre = $(`un_${uid}`).value.trim();
@@ -1217,7 +1332,7 @@ async function renderAdminAdmins(cont) {
   const admins = G.usersAll.filter(u => u.es_admin === true);
   cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
   const tbody = $('#adminsTableBody');
-  tbody.innerHTML = admins.map(u => `<tr><td><input id="adm_name_${u.user_id}" value="${escAttr(u.nombre)}"></td><td>${escAttr(u.email)}</td><td>${u.es_admin ? '<span class="badge badge-admin">Super Admin</span>' : 'Admin'}</td><td><button class="btn btn-primary btn-sm" onclick="updateAdmin('${u.user_id}')"><i class="fas fa-save"></i></button>${u.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u.user_id}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('');
+  tbody.innerHTML = admins.map(u => `<td><input id="adm_name_${u.user_id}" value="${escAttr(u.nombre)}"></td><td style="white-space:nowrap">${escAttr(u.email)}</td><td>${u.es_admin ? '<span class="badge badge-admin">Super Admin</span>' : 'Admin'}</td><td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="updateAdmin('${u.user_id}')"><i class="fas fa-save"></i></button>${u.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u.user_id}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('');
   window.updateAdmin = async (uid) => {
     const newName = $(`adm_name_${uid}`).value.trim();
     if (!newName) { showMsg('adminsMsg', 'El nombre no puede estar vacío', 'error'); return; }
