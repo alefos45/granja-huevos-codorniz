@@ -489,7 +489,6 @@ function genInvoiceNumber() {
   const userIdPart = G.userId ? '-' + G.userId.slice(-6).toUpperCase() : '';
   return `FAC-${unique}-${random}${userIdPart}`;
 }
-// 🔥 FUNCIÓN FALTANTE: dbCreatePedido
 async function dbCreatePedido(p) {
   const { error } = await window.supabase.from('pedidos').insert(p);
   if (error) throw error;
@@ -618,11 +617,9 @@ function initModals() {
   };
   $('printInvoiceBtn').onclick = () => window.print();
   $('closeInvoiceBtn').onclick = () => $('invoiceModal').classList.add('hidden');
-  // Cerrar modales al clic en overlay
   [$('invoiceModal'), $('suggestionModal'), $('supportModal')].forEach(m => {
     if (m) m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
   });
-  // Logo upload
   $('logoFileInput').onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -795,7 +792,6 @@ function renderCart() {
 }
 window.removeFromCart = i => { G.carrito.splice(i,1); renderCart(); };
 
-// 🔥 CONFIRM ORDER CON REINTENTOS POR DUPLICADO
 async function confirmOrder() {
   if (!G.carrito.length) { showMsg('orderMsg', 'Agrega al menos un item al carrito', 'warn'); return; }
   const btn = $('confirmOrderBtn');
@@ -871,7 +867,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody><tr></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -880,7 +876,7 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (sin cambios, idéntico al original excepto por la adición de dbCreatePedido)
+//  ADMIN PAGE (CORREGIDA)
 // =================================================================
 async function initAdminPage() {
   $('adminWelcome').textContent = G.nombre;
@@ -928,7 +924,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS ==========
+// ========== VENTAS (CORREGIDA) ==========
 async function renderAdminVentas(cont) {
   cont.innerHTML = '<div class="loader"></div>';
   try {
@@ -986,14 +982,20 @@ async function renderAdminVentas(cont) {
     </div>
     <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>`;
 
-  setTimeout(() => { const f = $('#metaFill'); if(f) f.style.width = pct + '%'; const p = $('#metaPct'); if(p) p.textContent = Math.floor(pct) + '%'; }, 100);
+  setTimeout(() => {
+    const metaFill = $('#metaFill');
+    if (metaFill) metaFill.style.width = pct + '%';
+    const metaPct = $('#metaPct');
+    if (metaPct) metaPct.textContent = Math.floor(pct) + '%';
+  }, 50);
+
   if (G.figTimer) clearInterval(G.figTimer);
   G.figIdx = 0;
   G.figTimer = setInterval(() => { const el = $('#metaFig'); if (el) { G.figIdx = (G.figIdx + 1) % G.FIGURAS.length; el.textContent = G.FIGURAS[G.figIdx]; } else clearInterval(G.figTimer); }, 4000);
 
   function updateVentaPreview() {
-    let cant = parseInt($('#aVentaCant').value) || 0;
-    let tipoForzado = $('#aVentaForzarTipo').value;
+    let cant = parseInt($('#aVentaCant')?.value) || 0;
+    let tipoForzado = $('#aVentaForzarTipo')?.value || '';
     let precio = 0, tipoTexto = '';
     if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
     else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
@@ -1005,46 +1007,103 @@ async function renderAdminVentas(cont) {
       else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
       else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
     }
-    $('#aVentaPrecio').textContent = pesos(precio);
-    $('#aVentaTipoAuto').textContent = tipoTexto;
-    $('#aVentaTotal').textContent = pesos(cant * precio);
+    const aVentaPrecio = $('#aVentaPrecio');
+    const aVentaTipoAuto = $('#aVentaTipoAuto');
+    const aVentaTotal = $('#aVentaTotal');
+    if (aVentaPrecio) aVentaPrecio.textContent = pesos(precio);
+    if (aVentaTipoAuto) aVentaTipoAuto.textContent = tipoTexto;
+    if (aVentaTotal) aVentaTotal.textContent = pesos(cant * precio);
   }
-  $('#aVentaCant').addEventListener('input', updateVentaPreview);
-  $('#aVentaForzarTipo').addEventListener('change', updateVentaPreview);
+
+  const aVentaCant = $('#aVentaCant');
+  const aVentaForzarTipo = $('#aVentaForzarTipo');
+  if (aVentaCant) aVentaCant.addEventListener('input', updateVentaPreview);
+  if (aVentaForzarTipo) aVentaForzarTipo.addEventListener('change', updateVentaPreview);
   updateVentaPreview();
 
-  $('#aVentaBtn').onclick = async () => {
-    let cant = parseInt($('#aVentaCant').value);
-    if (!cant || cant < 1 || cant > 500) { showMsg('aVentaMsg', 'Cantidad inválida', 'error'); return; }
-    let tipoForzado = $('#aVentaForzarTipo').value;
-    let precio = 0, tipoNombre = '';
-    if (tipoForzado === 'bodega') { precio = 4300; tipoNombre = 'Bodega'; }
-    else if (tipoForzado === 'restaurante') { precio = 4300; tipoNombre = 'Restaurante'; }
-    else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoNombre = 'Comida rápida'; }
-    else if (tipoForzado === 'comun') { precio = 4900; tipoNombre = 'Común'; }
-    else {
-      if (cant >= 50) { precio = 4300; tipoNombre = 'Mayorista'; }
-      else if (cant >= 20) { precio = 4500; tipoNombre = 'Bodega 20-49'; }
-      else if (cant >= 10) { precio = 4700; tipoNombre = 'Bodega 10-19'; }
-      else { precio = 4900; tipoNombre = 'Estándar'; }
-    }
-    try {
-      await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: tipoNombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
-      showMsg('aVentaMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
-      $('#aVentaCant').value = 1; updateVentaPreview();
-      G.ventasAll = await dbAllVentas();
-      renderChartDir();
-      renderUltimosPedidos();
-    } catch(e) { showMsg('aVentaMsg', e.message, 'error'); }
-  };
+  const aVentaBtn = $('#aVentaBtn');
+  if (aVentaBtn) {
+    aVentaBtn.onclick = async () => {
+      let cant = parseInt($('#aVentaCant')?.value);
+      if (!cant || cant < 1 || cant > 500) { showMsg('aVentaMsg', 'Cantidad inválida', 'error'); return; }
+      let tipoForzado = $('#aVentaForzarTipo')?.value || '';
+      let precio = 0, tipoNombre = '';
+      if (tipoForzado === 'bodega') { precio = 4300; tipoNombre = 'Bodega'; }
+      else if (tipoForzado === 'restaurante') { precio = 4300; tipoNombre = 'Restaurante'; }
+      else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoNombre = 'Comida rápida'; }
+      else if (tipoForzado === 'comun') { precio = 4900; tipoNombre = 'Común'; }
+      else {
+        if (cant >= 50) { precio = 4300; tipoNombre = 'Mayorista'; }
+        else if (cant >= 20) { precio = 4500; tipoNombre = 'Bodega 20-49'; }
+        else if (cant >= 10) { precio = 4700; tipoNombre = 'Bodega 10-19'; }
+        else { precio = 4900; tipoNombre = 'Estándar'; }
+      }
+      try {
+        await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: tipoNombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
+        showMsg('aVentaMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
+        $('#aVentaCant').value = 1; updateVentaPreview();
+        G.ventasAll = await dbAllVentas();
+        renderChartDir();
+        renderUltimosPedidos();
+      } catch(e) { showMsg('aVentaMsg', e.message, 'error'); }
+    };
+  }
 
-  $('#periodoFilter').onchange = () => { renderUltimosPedidos(); renderChartPed(); };
-  $('#exportCsvBtn').onclick = exportCsvPedidos;
-  $('#exportVentasCsvBtn').onclick = exportVentasCSV;
+  const periodoFilter = $('#periodoFilter');
+  if (periodoFilter) periodoFilter.onchange = () => { renderUltimosPedidos(); renderChartPed(); };
 
-  renderChartDir();
-  renderChartPed();
-  renderUltimosPedidos();
+  const exportCsvBtn = $('#exportCsvBtn');
+  if (exportCsvBtn) exportCsvBtn.onclick = exportCsvPedidos;
+
+  const exportVentasCsvBtn = $('#exportVentasCsvBtn');
+  if (exportVentasCsvBtn) exportVentasCsvBtn.onclick = exportVentasCSV;
+
+  requestAnimationFrame(() => {
+    renderChartDir();
+    renderChartPed();
+    renderUltimosPedidos();
+  });
+}
+
+function renderChartDir() {
+  const canvas = $('#chartDir');
+  if (!canvas) return;
+  const mapa = new Map();
+  G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
+  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+  if (G.chartDir) G.chartDir.destroy();
+  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  G.chartDir = new Chart(canvas, {
+    type: 'bar',
+    data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas directas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
+  });
+}
+
+function renderChartPed() {
+  const canvas = $('#chartPed');
+  if (!canvas) return;
+  const periodo = $('#periodoFilter')?.value || 'todo';
+  const filtrados = filterByPeriod(G.pedidosAll, periodo);
+  const mapa = new Map();
+  filtrados.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
+  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+  if (G.chartPed) G.chartPed.destroy();
+  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  G.chartPed = new Chart(canvas, {
+    type: 'bar',
+    data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Pedidos app', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(59,107,59,0.75)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
+  });
+}
+
+function renderUltimosPedidos() {
+  const cont = $('#ultimosPedidos');
+  if (!cont) return;
+  const periodo = $('#periodoFilter')?.value || 'todo';
+  const filtrados = filterByPeriod(G.pedidosAll, periodo);
+  if (!filtrados.length) { cont.innerHTML = '<div class="muted">Sin pedidos en este período</div>'; return; }
+  cont.innerHTML = filtrados.slice(0,5).map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}"><div class="order-meta"><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span><span class="order-total" style="margin-left:auto">${pesos(p.total)}</span></div><div class="order-date">${fmtDateShort(p.fecha)}</div></div>`).join('');
 }
 
 function exportVentasCSV() {
@@ -1056,34 +1115,7 @@ function exportVentasCSV() {
   a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
-function renderChartDir() {
-  const canvas = $('#chartDir'); if (!canvas) return;
-  const mapa = new Map();
-  G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
-  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
-  if (G.chartDir) G.chartDir.destroy();
-  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-  G.chartDir = new Chart(canvas, { type: 'bar', data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas directas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } } });
-}
-function renderChartPed() {
-  const canvas = $('#chartPed'); if (!canvas) return;
-  const periodo = $('#periodoFilter')?.value || 'todo';
-  const filtrados = filterByPeriod(G.pedidosAll, periodo);
-  const mapa = new Map();
-  filtrados.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
-  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
-  if (G.chartPed) G.chartPed.destroy();
-  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-  G.chartPed = new Chart(canvas, { type: 'bar', data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Pedidos app', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(59,107,59,0.75)', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } } });
-}
-function renderUltimosPedidos() {
-  const cont = $('#ultimosPedidos');
-  if (!cont) return;
-  const periodo = $('#periodoFilter')?.value || 'todo';
-  const filtrados = filterByPeriod(G.pedidosAll, periodo);
-  if (!filtrados.length) { cont.innerHTML = '<div class="muted">Sin pedidos en este período</div>'; return; }
-  cont.innerHTML = filtrados.slice(0,5).map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}"><div class="order-meta"><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span><span class="order-total" style="margin-left:auto">${pesos(p.total)}</span></div><div class="order-date">${fmtDateShort(p.fecha)}</div></div>`).join('');
-}
+
 function exportCsvPedidos() {
   let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
   G.pedidosAll.forEach(p => { csv += `"${p.invoice_number}","${fmtDate(p.fecha)}","${p.total}","${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`; });
@@ -1093,8 +1125,7 @@ function exportCsvPedidos() {
   a.click();
 }
 
-// ========== PEDIDOS, USUARIOS, SUGERENCIAS, RESPALDO, ADMINS (sin cambios funcionales) ==========
-// (Se mantienen exactamente igual que en tu código original, solo se añade dbCreatePedido arriba)
+// ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader"></div>';
   try { G.pedidosAll = await dbAllPedidos(); } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`; return; }
@@ -1119,16 +1150,17 @@ window.adminMarkDelivered = async (id) => {
 window.adminShowInvoice = async (pedidoId) => {
   const p = G.pedidosAll.find(x => x.id == pedidoId);
   if (!p) return;
-  $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7</div></div><div class="invoice-num"><div style="font-size:1rem;font-weight:700">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.status}</div></div></div><div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
+  $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7</div></div><div class="invoice-num"><div style="font-size:1rem;font-weight:700">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.status}</div></div></div><div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
   $('invoiceModal').classList.remove('hidden');
 };
 
+// ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
   G.usersAll = await dbAllUsers();
   cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
   const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
   const tbody = $('#usersTableBody');
-  tbody.innerHTML = G.usersAll.map(u => `<tr><td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td><td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td><td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td><td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td><td><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+  tbody.innerHTML = G.usersAll.map(u => `<tr><td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td><td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td><td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td><td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td><td><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td></td>`).join('');
 }
 window.adminSaveUser = async (uid) => {
   const nombre = $(`un_${uid}`).value.trim();
@@ -1143,12 +1175,14 @@ window.adminDeleteUser = async (uid) => {
   try { await dbDeleteUser(uid); await renderAdminTab('usuarios'); } catch(e) { alert('Error al eliminar: ' + e.message); }
 };
 
+// ========== SUGERENCIAS ==========
 async function renderAdminSugerencias(cont) {
   let sugs = [];
   try { sugs = await dbAllSuggs(); } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`; return; }
   cont.innerHTML = `<div class="card"><div class="card-title">💬 Buzón de sugerencias <small>${sugs.length} mensajes</small></div>` + (sugs.length ? sugs.map(s => `<div class="sug-card"><div style="font-weight:600">${escHtml(s.nombre||'Anónimo')} ${s.email?`<span style="font-weight:400;font-size:.85rem;color:var(--c-muted)">· ${escHtml(s.email)}</span>`:''}</div><p style="margin-top:.35rem">${escHtml(s.mensaje)}</p><div class="sug-meta">${fmtDate(s.fecha)}</div></div>`).join('') : '<div class="cart-empty">Sin sugerencias aún</div>') + '</div>';
 }
 
+// ========== RESPALDO ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
   cont.innerHTML = `<div class="card"><div class="card-title">💾 Respaldo de datos</div><p style="margin-bottom:1rem;color:var(--c-muted)">Exporta todos los datos de la aplicación.</p><div style="display:flex;flex-wrap:wrap;gap:.75rem"><button class="btn btn-primary" id="exportJsonBtn"><i class="fas fa-download"></i> JSON completo</button><button class="btn btn-ghost" id="exportPedCsvBtn"><i class="fas fa-file-csv"></i> CSV pedidos</button><button class="btn btn-ghost" id="exportVenCsvBtn"><i class="fas fa-file-csv"></i> CSV ventas</button></div><div id="backupMsg" style="margin-top:.75rem"></div></div><div class="card"><div class="card-title">🖼️ Logo personalizado</div><div class="logo-upload" onclick="$('logoFileInput').click()">${logoActual?`<img src="${escAttr(logoActual)}" class="logo-preview">`:'<img src="logo.svg" class="logo-preview" onerror="this.outerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:2rem;color:var(--c-muted)\\\'></i>\'">'}<p style="margin-top:.5rem;color:var(--c-muted);font-size:.85rem">Haz clic para cambiar el logo</p></div>${logoActual?`<button class="btn btn-ghost btn-sm mt-1" id="clearLogoBtn"><i class="fas fa-times"></i> Restaurar logo original</button>`:''}</div>`;
@@ -1177,6 +1211,7 @@ function renderAdminRespaldo(cont) {
   if (clr) clr.onclick = () => { if (confirm('¿Restaurar el logo original?')) { lsSet('granjaLogo', ''); ['clientTopLogo','adminTopLogo'].forEach(id => setLogoEl($(id))); renderAdminRespaldo(cont); } };
 }
 
+// ========== SUPER ADMIN ==========
 async function renderAdminAdmins(cont) {
   G.usersAll = await dbAllUsers();
   const admins = G.usersAll.filter(u => u.es_admin === true);
