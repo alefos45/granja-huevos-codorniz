@@ -982,7 +982,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></tr></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></td></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -1045,7 +1045,10 @@ async function renderAdminVentas(cont) {
   try {
     G.ventasAll = await dbAllVentas();
     G.pedidosAll = await dbAllPedidos();
-  } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${escHtml(e.message)}</div>`; return; }
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${escHtml(e.message)}</div>`;
+    return;
+  }
 
   const tDir = G.ventasAll.reduce((s,v) => s + v.total, 0);
   const tPed = G.pedidosAll.reduce((s,p) => s + p.total, 0);
@@ -1097,20 +1100,30 @@ async function renderAdminVentas(cont) {
     </div>
     <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>`;
 
-  setTimeout(() => {
-    const metaFill = $('#metaFill');
-    if (metaFill) metaFill.style.width = pct + '%';
-    const metaPct = $('#metaPct');
-    if (metaPct) metaPct.textContent = Math.floor(pct) + '%';
-  }, 50);
+  // Actualizar meta
+  const metaFill = $('#metaFill');
+  if (metaFill) metaFill.style.width = pct + '%';
+  const metaPct = $('#metaPct');
+  if (metaPct) metaPct.textContent = Math.floor(pct) + '%';
 
+  // Animación figura
   if (G.figTimer) clearInterval(G.figTimer);
   G.figIdx = 0;
-  G.figTimer = setInterval(() => { const el = $('#metaFig'); if (el) { G.figIdx = (G.figIdx + 1) % G.FIGURAS.length; el.textContent = G.FIGURAS[G.figIdx]; } else clearInterval(G.figTimer); }, 4000);
+  G.figTimer = setInterval(() => {
+    const el = $('#metaFig');
+    if (el) {
+      G.figIdx = (G.figIdx + 1) % G.FIGURAS.length;
+      el.textContent = G.FIGURAS[G.figIdx];
+    } else clearInterval(G.figTimer);
+  }, 4000);
 
+  // Actualizar vista previa venta directa
   function updateVentaPreview() {
-    let cant = parseInt($('#aVentaCant')?.value) || 0;
-    let tipoForzado = $('#aVentaForzarTipo')?.value || '';
+    const aVentaCant = $('#aVentaCant');
+    const aVentaForzarTipo = $('#aVentaForzarTipo');
+    if (!aVentaCant || !aVentaForzarTipo) return;
+    let cant = parseInt(aVentaCant.value) || 0;
+    let tipoForzado = aVentaForzarTipo.value;
     let precio = 0, tipoTexto = '';
     if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
     else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
@@ -1139,9 +1152,12 @@ async function renderAdminVentas(cont) {
   const aVentaBtn = $('#aVentaBtn');
   if (aVentaBtn) {
     aVentaBtn.onclick = async () => {
-      let cant = parseInt($('#aVentaCant')?.value);
+      const aVentaCantVal = $('#aVentaCant');
+      const aVentaForzarTipoVal = $('#aVentaForzarTipo');
+      if (!aVentaCantVal || !aVentaForzarTipoVal) return;
+      let cant = parseInt(aVentaCantVal.value);
       if (!cant || cant < 1 || cant > 500) { showMsg('aVentaMsg', 'Cantidad inválida', 'error'); return; }
-      let tipoForzado = $('#aVentaForzarTipo')?.value || '';
+      let tipoForzado = aVentaForzarTipoVal.value;
       let precio = 0, tipoNombre = '';
       if (tipoForzado === 'bodega') { precio = 4300; tipoNombre = 'Bodega'; }
       else if (tipoForzado === 'restaurante') { precio = 4300; tipoNombre = 'Restaurante'; }
@@ -1156,7 +1172,8 @@ async function renderAdminVentas(cont) {
       try {
         await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: tipoNombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
         showMsg('aVentaMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
-        $('#aVentaCant').value = 1; updateVentaPreview();
+        if (aVentaCantVal) aVentaCantVal.value = 1;
+        updateVentaPreview();
         G.ventasAll = await dbAllVentas();
         renderChartDir();
         renderUltimosPedidos();
@@ -1173,11 +1190,12 @@ async function renderAdminVentas(cont) {
   const exportVentasCsvBtn = $('#exportVentasCsvBtn');
   if (exportVentasCsvBtn) exportVentasCsvBtn.onclick = exportVentasCSV;
 
-  requestAnimationFrame(() => {
+  // Renderizar gráficos después de que el DOM esté listo
+  setTimeout(() => {
     renderChartDir();
     renderChartPed();
     renderUltimosPedidos();
-  });
+  }, 100);
 }
 
 function renderChartDir() {
@@ -1243,18 +1261,56 @@ function exportCsvPedidos() {
 // ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader"></div>';
-  try { G.pedidosAll = await dbAllPedidos(); } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`; return; }
+  try {
+    G.pedidosAll = await dbAllPedidos();
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`;
+    return;
+  }
   const users = await dbAllUsers();
   const userMap = new Map(); users.forEach(u => userMap.set(u.user_id, u.nombre));
 
-  cont.innerHTML = `<div class="card"><div class="card-title">📦 Todos los pedidos <small>${G.pedidosAll.length} total</small></div><div class="filter-bar"><button class="chip active" data-pf="todo">Todos</button><button class="chip" data-pf="Pendiente">Pendientes</button><button class="chip" data-pf="Entregado">Entregados</button></div><div id="adminPedidosList"></div></div>`;
+  cont.innerHTML = `<div class="card"><div class="card-title">📦 Todos los pedidos <small>${G.pedidosAll.length} total</small></div>
+    <div class="filter-bar" id="pedFilterBar">
+      <button class="chip active" data-pf="todo">Todos</button>
+      <button class="chip" data-pf="Pendiente">Pendientes</button>
+      <button class="chip" data-pf="Entregado">Entregados</button>
+    </div>
+    <div id="adminPedidosList"></div>
+  </div>`;
+
   function renderList(filter) {
     const list = filter === 'todo' ? G.pedidosAll : G.pedidosAll.filter(p => p.status === filter);
     const cont2 = $('#adminPedidosList');
+    if (!cont2) return;
     if (!list.length) { cont2.innerHTML = '<div class="cart-empty">Sin pedidos</div>'; return; }
-    cont2.innerHTML = list.map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}"><div class="order-meta"><div><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div><span class="order-date">${fmtDate(p.fecha)}</span></div><div style="display:flex;justify-content:space-between;margin-top:.4rem"><span style="font-size:.85rem;color:var(--c-muted)">${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas</span><span class="order-total">${pesos(p.total)}</span></div>${p.nota?`<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;">📝 ${escAttr(p.nota)}</div>`:''}<div style="margin-top:.65rem;display:flex;gap:.5rem;flex-wrap:wrap">${p.status!=='Entregado'?`<button class="btn btn-success btn-sm" onclick="adminMarkDelivered('${p.id}')"><i class="fas fa-check"></i> Marcar entregado</button>`:''}<button class="btn btn-ghost btn-sm" onclick="adminShowInvoice('${p.id}')"><i class="fas fa-file-invoice"></i> Factura</button></div></div>`).join('');
+    cont2.innerHTML = list.map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}">
+      <div class="order-meta">
+        <div><span class="order-num">${escAttr(p.invoice_number)}</span>
+          <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
+        </div>
+        <span class="order-date">${fmtDate(p.fecha)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:.4rem">
+        <span style="font-size:.85rem;color:var(--c-muted)">${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas</span>
+        <span class="order-total">${pesos(p.total)}</span>
+      </div>
+      ${p.nota ? `<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;">📝 ${escAttr(p.nota)}</div>` : ''}
+      <div style="margin-top:.65rem;display:flex;gap:.5rem;flex-wrap:wrap">
+        ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="adminMarkDelivered(${p.id})"><i class="fas fa-check"></i> Marcar entregado</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="adminShowInvoice(${p.id})"><i class="fas fa-file-invoice"></i> Factura</button>
+      </div>
+    </div>`).join('');
   }
-  cont.querySelectorAll('[data-pf]').forEach(btn => { btn.onclick = () => { cont.querySelectorAll('[data-pf]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderList(btn.dataset.pf); }; });
+
+  const chips = cont.querySelectorAll('[data-pf]');
+  chips.forEach(btn => {
+    btn.onclick = () => {
+      chips.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderList(btn.dataset.pf);
+    };
+  });
   renderList('todo');
 }
 window.adminMarkDelivered = async (id) => {
@@ -1271,29 +1327,54 @@ window.adminShowInvoice = async (pedidoId) => {
 
 // ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
-  G.usersAll = await dbAllUsers();
+  try {
+    G.usersAll = await dbAllUsers();
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error al cargar usuarios: ${escHtml(e.message)}</div>`;
+    return;
+  }
   cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
   const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
   const tbody = $('#usersTableBody');
-  tbody.innerHTML = G.usersAll.map(u => `<td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td><td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td><td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td><td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td><td style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+  if (!tbody) return;
+  tbody.innerHTML = G.usersAll.map(u => `
+    <tr>
+      <td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td>
+      <td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td>
+      <td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td>
+      <td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td>
+      <td style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('');
 }
 window.adminSaveUser = async (uid) => {
   const nombre = $(`un_${uid}`).value.trim();
   const tipo = $(`ut_${uid}`).value;
   const es_admin = $(`ua_${uid}`).checked;
   if (!nombre) { showMsg('usersMsg', 'El nombre no puede estar vacío', 'error'); return; }
-  try { await dbUpdateUser(uid, { nombre, tipo, es_admin }); showMsg('usersMsg', '✅ Usuario actualizado', 'success'); setTimeout(() => clearMsg('usersMsg'), 4000); } catch(e) { showMsg('usersMsg', '❌ ' + e.message, 'error'); }
+  try {
+    await dbUpdateUser(uid, { nombre, tipo, es_admin });
+    showMsg('usersMsg', '✅ Usuario actualizado', 'success');
+    setTimeout(() => clearMsg('usersMsg'), 4000);
+  } catch(e) { showMsg('usersMsg', '❌ ' + e.message, 'error'); }
 };
 window.adminDeleteUser = async (uid) => {
   if (uid === G.userId) { alert('No puedes eliminar tu propio usuario administrador.'); return; }
   if (!confirm('¿Eliminar usuario? Esta acción no se puede deshacer.')) return;
-  try { await dbDeleteUser(uid); await renderAdminTab('usuarios'); } catch(e) { alert('Error al eliminar: ' + e.message); }
+  try {
+    await dbDeleteUser(uid);
+    await renderAdminTab('usuarios');
+  } catch(e) { alert('Error al eliminar: ' + e.message); }
 };
 
 // ========== SUGERENCIAS ==========
 async function renderAdminSugerencias(cont) {
   let sugs = [];
-  try { sugs = await dbAllSuggs(); } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`; return; }
+  try {
+    sugs = await dbAllSuggs();
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`;
+    return;
+  }
   cont.innerHTML = `<div class="card"><div class="card-title">💬 Buzón de sugerencias <small>${sugs.length} mensajes</small></div>` + (sugs.length ? sugs.map(s => `<div class="sug-card"><div style="font-weight:600">${escHtml(s.nombre||'Anónimo')} ${s.email?`<span style="font-weight:400;font-size:.85rem;color:var(--c-muted)">· ${escHtml(s.email)}</span>`:''}</div><p style="margin-top:.35rem">${escHtml(s.mensaje)}</p><div class="sug-meta">${fmtDate(s.fecha)}</div></div>`).join('') : '<div class="cart-empty">Sin sugerencias aún</div>') + '</div>';
 }
 
@@ -1330,17 +1411,31 @@ function renderAdminRespaldo(cont) {
 async function renderAdminAdmins(cont) {
   G.usersAll = await dbAllUsers();
   const admins = G.usersAll.filter(u => u.es_admin === true);
-  cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
+  cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></td></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
   const tbody = $('#adminsTableBody');
-  tbody.innerHTML = admins.map(u => `<td><input id="adm_name_${u.user_id}" value="${escAttr(u.nombre)}"></td><td style="white-space:nowrap">${escAttr(u.email)}</td><td>${u.es_admin ? '<span class="badge badge-admin">Super Admin</span>' : 'Admin'}</td><td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="updateAdmin('${u.user_id}')"><i class="fas fa-save"></i></button>${u.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u.user_id}')"><i class="fas fa-trash"></i></button>` : ''}</td></tr>`).join('');
+  tbody.innerHTML = admins.map(u => `
+    <tr>
+      <td><input id="adm_name_${u.user_id}" value="${escAttr(u.nombre)}"></td>
+      <td style="white-space:nowrap">${escAttr(u.email)}</td>
+      <td>${u.es_admin ? '<span class="badge badge-admin">Super Admin</span>' : 'Admin'}</td>
+      <td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="updateAdmin('${u.user_id}')"><i class="fas fa-save"></i></button>${u.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u.user_id}')"><i class="fas fa-trash"></i></button>` : ''}</td>
+    </tr>`).join('');
   window.updateAdmin = async (uid) => {
     const newName = $(`adm_name_${uid}`).value.trim();
     if (!newName) { showMsg('adminsMsg', 'El nombre no puede estar vacío', 'error'); return; }
-    try { await dbUpdateUser(uid, { nombre: newName }); showMsg('adminsMsg', '✅ Administrador actualizado', 'success'); await renderAdminTab('admins'); } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+    try {
+      await dbUpdateUser(uid, { nombre: newName });
+      showMsg('adminsMsg', '✅ Administrador actualizado', 'success');
+      await renderAdminTab('admins');
+    } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
   };
   window.deleteAdmin = async (uid) => {
     if (!confirm('¿Eliminar este administrador? Ya no podrá acceder como admin.')) return;
-    try { await dbUpdateUser(uid, { es_admin: false }); showMsg('adminsMsg', '✅ Administrador eliminado', 'success'); await renderAdminTab('admins'); } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+    try {
+      await dbUpdateUser(uid, { es_admin: false });
+      showMsg('adminsMsg', '✅ Administrador eliminado', 'success');
+      await renderAdminTab('admins');
+    } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
   };
   $('#btnAddAdmin').onclick = async () => {
     const email = prompt('Correo electrónico del nuevo administrador:');
