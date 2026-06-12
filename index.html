@@ -11,127 +11,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!--
-=================================================================
- SQL PARA SUPABASE — ejecutar en el SQL Editor de tu proyecto
-=================================================================
-
--- 1. Tabla usuarios (si no existe)
-create table if not exists public.usuarios (
-  id          bigserial primary key,
-  user_id     uuid references auth.users(id) on delete cascade unique not null,
-  nombre      text not null,
-  documento   text,
-  email       text,
-  direccion   text,
-  telefono    text,
-  whatsapp    text,
-  tipo        text default 'natural',
-  es_admin    boolean default false,
-  created_at  timestamptz default now()
-);
-
--- 2. Tabla pedidos
-create table if not exists public.pedidos (
-  id              bigserial primary key,
-  invoice_number  text unique not null,
-  user_id         uuid references auth.users(id) on delete cascade not null,
-  items           jsonb not null,
-  total           numeric not null,
-  payment_method  text,
-  status          text default 'Pendiente',
-  nota            text,
-  fecha           timestamptz default now()
-);
-
--- 3. Tabla ventas_directas
-create table if not exists public.ventas_directas (
-  id               bigserial primary key,
-  user_id          uuid references auth.users(id) on delete cascade not null,
-  cant             integer not null,
-  tipo_nombre      text,
-  precio_unitario  numeric,
-  total            numeric,
-  nota             text,
-  fecha            timestamptz default now()
-);
-
--- 4. Tabla sugerencias
-create table if not exists public.sugerencias (
-  id       bigserial primary key,
-  nombre   text,
-  email    text,
-  mensaje  text,
-  fecha    timestamptz default now()
-);
-
--- RLS
-alter table public.usuarios        enable row level security;
-alter table public.pedidos         enable row level security;
-alter table public.ventas_directas enable row level security;
-alter table public.sugerencias     enable row level security;
-
--- Políticas (ajustar según necesidades)
--- Usuarios: propio o admin
-create policy "usuario_propio" on public.usuarios for all using (auth.uid() = user_id);
-create policy "admin_todos_usuarios" on public.usuarios for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
-
--- Pedidos: propio o admin
-create policy "pedido_propio" on public.pedidos for all using (auth.uid() = user_id);
-create policy "admin_todos_pedidos" on public.pedidos for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
-
--- Ventas directas: solo admin
-create policy "admin_ventas_directas" on public.ventas_directas for all using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
-
--- Sugerencias: cualquiera inserta, solo admin lee
-create policy "cualquiera_inserta" on public.sugerencias for insert with check (true);
-create policy "admin_lee_sugerencias" on public.sugerencias for select using (exists(select 1 from public.usuarios where user_id = auth.uid() and es_admin = true));
-
--- TRIGGER AUTOMÁTICO (guarda todos los campos del formulario)
--- Eliminar si ya existe
-drop trigger if exists on_auth_user_created on auth.users;
-drop function if exists public.handle_new_user();
-
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  insert into public.usuarios (
-    user_id,
-    nombre,
-    documento,
-    telefono,
-    whatsapp,
-    direccion,
-    tipo,
-    email,
-    es_admin
-  )
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'nombre', ''),
-    coalesce(new.raw_user_meta_data->>'documento', ''),
-    coalesce(new.raw_user_meta_data->>'telefono', ''),
-    coalesce(new.raw_user_meta_data->>'whatsapp', ''),
-    coalesce(new.raw_user_meta_data->>'direccion', ''),
-    coalesce(new.raw_user_meta_data->>'tipo', 'natural'),
-    new.email,
-    false
-  );
-  return new;
-end;
-$$;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
-=================================================================
--->
-
 <style>
 /* ====================== ROOT ====================== */
 :root {
@@ -991,9 +870,10 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (CORREGIDA)
+//  ADMIN PAGE (VERSIÓN CORREGIDA Y ROBUSTA)
 // =================================================================
 async function initAdminPage() {
+  console.log('initAdminPage - usuario:', G.nombre, 'esAdmin:', G.esAdmin);
   $('adminWelcome').textContent = G.nombre;
   $('adminLogout').onclick = () => { window.supabase.auth.signOut().then(() => location.reload()); };
   $('adminTopLogo').onclick = () => $('logoFileInput').click();
@@ -1021,6 +901,7 @@ async function initAdminPage() {
       main.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       $(`atab-${btn.dataset.atab}`).classList.add('active');
+      console.log('Cargando tab:', btn.dataset.atab);
       await renderAdminTab(btn.dataset.atab);
     };
   });
@@ -1041,11 +922,14 @@ async function renderAdminTab(tab) {
 
 // ========== VENTAS (CORREGIDA) ==========
 async function renderAdminVentas(cont) {
+  console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader"></div>';
   try {
     G.ventasAll = await dbAllVentas();
     G.pedidosAll = await dbAllPedidos();
+    console.log('Ventas cargadas:', G.ventasAll.length, 'Pedidos cargados:', G.pedidosAll.length);
   } catch(e) {
+    console.error('Error cargando datos:', e);
     cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${escHtml(e.message)}</div>`;
     return;
   }
@@ -1205,7 +1089,11 @@ function renderChartDir() {
   G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
   const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
   if (G.chartDir) G.chartDir.destroy();
-  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  if (!sorted.length) { 
+    const ctx = canvas.getContext('2d'); 
+    ctx.clearRect(0,0,canvas.width,canvas.height); 
+    return; 
+  }
   G.chartDir = new Chart(canvas, {
     type: 'bar',
     data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas directas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)', borderRadius: 4 }] },
@@ -1222,7 +1110,11 @@ function renderChartPed() {
   filtrados.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
   const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
   if (G.chartPed) G.chartPed.destroy();
-  if (!sorted.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  if (!sorted.length) { 
+    const ctx = canvas.getContext('2d'); 
+    ctx.clearRect(0,0,canvas.width,canvas.height); 
+    return; 
+  }
   G.chartPed = new Chart(canvas, {
     type: 'bar',
     data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Pedidos app', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(59,107,59,0.75)', borderRadius: 4 }] },
@@ -1236,7 +1128,10 @@ function renderUltimosPedidos() {
   const periodo = $('#periodoFilter')?.value || 'todo';
   const filtrados = filterByPeriod(G.pedidosAll, periodo);
   if (!filtrados.length) { cont.innerHTML = '<div class="muted">Sin pedidos en este período</div>'; return; }
-  cont.innerHTML = filtrados.slice(0,5).map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}"><div class="order-meta"><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span><span class="order-total" style="margin-left:auto">${pesos(p.total)}</span></div><div class="order-date">${fmtDateShort(p.fecha)}</div></div>`).join('');
+  cont.innerHTML = filtrados.slice(0,5).map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}">
+    <div class="order-meta"><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span><span class="order-total" style="margin-left:auto">${pesos(p.total)}</span></div>
+    <div class="order-date">${fmtDateShort(p.fecha)}</div>
+  </div>`).join('');
 }
 
 function exportVentasCSV() {
@@ -1260,15 +1155,16 @@ function exportCsvPedidos() {
 
 // ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
+  console.log('Cargando pedidos...');
   cont.innerHTML = '<div class="loader"></div>';
   try {
     G.pedidosAll = await dbAllPedidos();
+    console.log('Pedidos recibidos:', G.pedidosAll.length);
   } catch(e) {
+    console.error('Error cargando pedidos:', e);
     cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`;
     return;
   }
-  const users = await dbAllUsers();
-  const userMap = new Map(); users.forEach(u => userMap.set(u.user_id, u.nombre));
 
   cont.innerHTML = `<div class="card"><div class="card-title">📦 Todos los pedidos <small>${G.pedidosAll.length} total</small></div>
     <div class="filter-bar" id="pedFilterBar">
@@ -1327,13 +1223,20 @@ window.adminShowInvoice = async (pedidoId) => {
 
 // ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
+  console.log('Cargando usuarios...');
   try {
     G.usersAll = await dbAllUsers();
+    console.log('Usuarios recibidos:', G.usersAll.length);
   } catch(e) {
+    console.error('Error cargando usuarios:', e);
     cont.innerHTML = `<div class="alert alert-error">Error al cargar usuarios: ${escHtml(e.message)}</div>`;
     return;
   }
-  cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></tr></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
+  if (!G.usersAll.length) {
+    cont.innerHTML = `<div class="alert alert-info">No se encontraron usuarios en la base de datos. Verifica las políticas RLS o que haya usuarios registrados.</div>`;
+    return;
+  }
+  cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></table></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
   const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
   const tbody = $('#usersTableBody');
   if (!tbody) return;
@@ -1355,6 +1258,7 @@ window.adminSaveUser = async (uid) => {
     await dbUpdateUser(uid, { nombre, tipo, es_admin });
     showMsg('usersMsg', '✅ Usuario actualizado', 'success');
     setTimeout(() => clearMsg('usersMsg'), 4000);
+    await renderAdminTab('usuarios');
   } catch(e) { showMsg('usersMsg', '❌ ' + e.message, 'error'); }
 };
 window.adminDeleteUser = async (uid) => {
@@ -1411,7 +1315,7 @@ function renderAdminRespaldo(cont) {
 async function renderAdminAdmins(cont) {
   G.usersAll = await dbAllUsers();
   const admins = G.usersAll.filter(u => u.es_admin === true);
-  cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></td></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
+  cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
   const tbody = $('#adminsTableBody');
   tbody.innerHTML = admins.map(u => `
     <tr>
@@ -1469,7 +1373,9 @@ async function renderAdminAdmins(cont) {
     G.email = profile.email || session.user.email || '';
     G.documento = profile.documento || '';
     G.direccion = profile.direccion || '';
+    console.log('Perfil cargado:', G);
   } catch(e) {
+    console.error('Error cargando perfil:', e);
     await window.supabase.auth.signOut();
     $('authPage').style.display = '';
     initAuthPage();
