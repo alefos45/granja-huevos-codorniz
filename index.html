@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS (iguales que la última versión) ========== */
+/* ========== ESTILOS (iguales que la última versión, sin cambios) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -213,7 +213,7 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 </head>
 <body>
 
-<!-- AUTH PAGE -->
+<!-- AUTH PAGE (igual) -->
 <div id="authPage" class="page">
   <div class="auth-wrap">
     <div class="auth-brand">
@@ -378,7 +378,7 @@ let G = {
 };
 
 // =================================================================
-//  PRECIOS
+//  PRECIOS (sin cambios)
 // =================================================================
 function calcPrecio(tipo, cant) {
   cant = Number(cant);
@@ -719,7 +719,7 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE
+//  CLIENT PAGE (igual que antes)
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -935,7 +935,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody><tr></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -993,7 +993,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS ==========
+// ========== VENTAS (CORREGIDO: META SOLO VENTAS PAGADAS) ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -1010,9 +1010,10 @@ async function renderAdminVentas(cont) {
     return;
   }
 
-  const totalVentas = G.ventasAll.reduce((s,v) => s + v.total, 0);
+  // SOLO ventas directas con estado 'Pagado' contribuyen a la meta
+  const totalVentasPagadas = G.ventasAll.filter(v => v.status === 'Pagado').reduce((s,v) => s + v.total, 0);
   const totalPedidosPagados = G.pedidosAll.filter(p => p.status === 'Pagado').reduce((s,p) => s + p.total, 0);
-  const total = totalVentas + totalPedidosPagados;
+  const total = totalVentasPagadas + totalPedidosPagados;
   const pct = Math.min(100, (total / G.META) * 100);
   const falta = Math.max(0, G.META - total);
 
@@ -1027,9 +1028,9 @@ async function renderAdminVentas(cont) {
       </div>
     </div>
     <div class="grid-4" style="margin-bottom:1.25rem">
-      <div class="stat-card"><div class="stat-val">${pesos(totalVentas)}</div><div class="stat-label">Ventas directas</div></div>
-      <div class="stat-card"><div class="stat-val">${pesos(totalPedidosPagados)}</div><div class="stat-label">Pedidos app (Pagados)</div></div>
-      <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Transacciones</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalVentasPagadas)}</div><div class="stat-label">Ventas directas (pagadas)</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalPedidosPagados)}</div><div class="stat-label">Pedidos app (pagados)</div></div>
+      <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Total transacciones</div></div>
       <div class="stat-card"><div class="stat-val">${Math.floor(pct)}%</div><div class="stat-label">% de meta</div></div>
     </div>
     <div class="grid-2">
@@ -1205,6 +1206,7 @@ function renderChartDir() {
   const canvas = $('chartDir');
   if (!canvas) return;
   const mapa = new Map();
+  // Solo ventas pagadas para el gráfico? Podemos usar todas o pagadas. Usaremos todas para consistencia histórica.
   G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
   const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
   if (G.chartDir) G.chartDir.destroy();
@@ -1255,7 +1257,7 @@ async function renderAdminPedidos(cont) {
       items.push({
         id: v.id,
         tipo: 'venta_directa',
-        invoice: v.invoice_number || 'N/A',
+        invoice: v.invoice_number || 'Sin factura',
         fecha: v.fecha,
         total: v.total,
         status: v.status || 'Pendiente',
@@ -1350,15 +1352,15 @@ async function renderAdminPedidos(cont) {
       else if (transaccion.status === 'Cancelado') badgeEstado = 'badge-canceled';
       let itemsHtml = '';
       if (tipo === 'pedido') {
-        itemsHtml = (transaccion.items || []).map(i => `<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('');
+        itemsHtml = (transaccion.items || []).map(i => `<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</tr>`).join('');
       } else {
-        itemsHtml = `<tr><td>Cubeta 24 huevos (Venta directa)</td><td>${transaccion.cant}</td><td>${pesos(transaccion.precio_unitario)}</td><td>${pesos(transaccion.total)}</td></tr>`;
+        itemsHtml = `<tr><td>Cubeta 24 huevos (Venta directa)</td><td>${transaccion.cant}</td><td>${pesos(transaccion.precio_unitario)}</td><td>${pesos(transaccion.total)}</td></table>`;
       }
       $('invoiceContent').innerHTML = `
         <div class="invoice">
           <div class="invoice-header">
             <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div>
-            <div class="invoice-num">${transaccion.invoice_number || 'N/A'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
+            <div class="invoice-num">${transaccion.invoice_number || 'Sin factura'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
           </div>
           <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
           <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
@@ -1398,7 +1400,6 @@ async function renderAdminInventario(cont) {
         ${movimientosHtml}
       </div>`;
     
-    // Asignar eventos después de que el DOM esté listo
     requestAnimationFrame(() => {
       const btnAjustar = document.getElementById('btnAjustarStock');
       const btnRefrescar = document.getElementById('btnRefrescarStock');
@@ -1422,7 +1423,7 @@ async function renderAdminInventario(cont) {
   }
 }
 
-// ========== USUARIOS ==========
+// ========== USUARIOS (con políticas de envío) ==========
 async function renderAdminUsuarios(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
@@ -1501,7 +1502,7 @@ async function renderAdminSugerencias(cont) {
   }
 }
 
-// ========== RESPALDO ==========
+// ========== RESPALDO (con herramientas de limpieza) ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
   cont.innerHTML = `
@@ -1517,6 +1518,15 @@ function renderAdminRespaldo(cont) {
       <div id="backupFullMsg" class="mt-1"></div>
     </div>
     <div class="card">
+      <div class="card-title">🛠️ Herramientas de limpieza (datos de prueba)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem">
+        <button class="btn btn-info" id="fixMissingInvoicesBtn">Asignar factura a ventas sin factura</button>
+        <button class="btn btn-warning" id="cancelPendingVentasBtn">Poner todas las ventas pendientes como canceladas</button>
+        <button class="btn btn-secondary" id="showStatsBtn">Mostrar estadísticas de ventas directas</button>
+      </div>
+      <div id="limpiezaMsg" class="mt-1"></div>
+    </div>
+    <div class="card">
       <div class="card-title">🖼️ Logo personalizado</div>
       <div class="logo-upload" onclick="$('logoFileInput').click()">
         ${logoActual ? `<img src="${logoActual}" class="logo-preview">` : '<img src="logo.svg" class="logo-preview" onerror="this.outerHTML=\'<i class=\'fas fa-image\'></i>\'">'}
@@ -1525,6 +1535,7 @@ function renderAdminRespaldo(cont) {
       ${logoActual ? `<button class="btn btn-ghost btn-sm mt-1" id="resetLogoFull">Restaurar logo original</button>` : ''}
     </div>
   `;
+  // Exportaciones (igual)
   $('#exportJsonFull').onclick = async () => {
     const [usuarios, pedidos, ventas, sugerencias, stock, movimientos] = await Promise.all([
       supabase.from('usuarios').select('*'), supabase.from('pedidos').select('*'),
@@ -1565,6 +1576,41 @@ function renderAdminRespaldo(cont) {
     ['clientTopLogo', 'adminTopLogo'].forEach(id => setLogoEl($(id)));
     updateAuthLogo();
     renderAdminRespaldo(cont);
+  };
+
+  // Herramientas de limpieza
+  $('#fixMissingInvoicesBtn').onclick = async () => {
+    const { data: sinFactura, error } = await supabase.from('ventas_directas').select('*').is('invoice_number', null);
+    if (error) { alert('Error: ' + error.message); return; }
+    if (!sinFactura.length) { alert('No hay ventas directas sin factura.'); return; }
+    let count = 0;
+    for (const v of sinFactura) {
+      const newInvoice = genInvoiceNumber('VD');
+      const { error: updErr } = await supabase.from('ventas_directas').update({ invoice_number: newInvoice }).eq('id', v.id);
+      if (!updErr) count++;
+    }
+    alert(`Se asignaron facturas a ${count} ventas directas.`);
+    await renderAdminTab('respaldo');
+    await renderAdminTab('ventas');
+    await renderAdminTab('pedidos');
+  };
+  $('#cancelPendingVentasBtn').onclick = async () => {
+    if (!confirm('¿Poner TODAS las ventas directas con estado Pendiente (o NULL) como Canceladas? Esto afectará la meta si estaban sumando.')) return;
+    const { error } = await supabase.from('ventas_directas').update({ status: 'Cancelado' }).in('status', ['Pendiente', null]);
+    if (error) { alert('Error: ' + error.message); return; }
+    alert('Ventas pendientes canceladas.');
+    await renderAdminTab('respaldo');
+    await renderAdminTab('ventas');
+    await renderAdminTab('pedidos');
+  };
+  $('#showStatsBtn').onclick = async () => {
+    const { data: ventas, error } = await supabase.from('ventas_directas').select('status, total');
+    if (error) { alert('Error: ' + error.message); return; }
+    const total = ventas.reduce((s,v) => s + v.total, 0);
+    const pendientes = ventas.filter(v => v.status === 'Pendiente' || !v.status).length;
+    const pagadas = ventas.filter(v => v.status === 'Pagado').length;
+    const canceladas = ventas.filter(v => v.status === 'Cancelado').length;
+    alert(`Ventas directas:\nTotal: ${ventas.length}\nPendientes: ${pendientes}\nPagadas: ${pagadas}\nCanceladas: ${canceladas}\nSuma total de todas: ${pesos(total)}`);
   };
 }
 
