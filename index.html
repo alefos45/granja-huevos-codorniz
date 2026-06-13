@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS (igual que antes, sin cambios relevantes) ========== */
+/* ========== ESTILOS ORIGINALES (sin cambios, solo añadimos .badge-pagado y .stock-card) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -138,6 +138,7 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .order-total { font-family: var(--font-head); font-weight: 700; color: var(--c-brown); }
 .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.6rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 700; }
 .badge-pending   { background: #fef3e0; color: var(--c-amber); border: 1px solid var(--c-pale); }
+.badge-delivered { background: #e0f0e8; color: var(--c-green); border: 1px solid #b7dbb7; }
 .badge-pagado    { background: #d4e7f0; color: var(--c-blue); border: 1px solid #9bc0d0; }
 .badge-canceled  { background: #f1e0dd; color: var(--c-red); border: 1px solid #f5c6c1; }
 .badge-admin     { background: #e8e0ff; color: #4a2b7a; border: 1px solid #c5b8ee; }
@@ -209,7 +210,7 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 </head>
 <body>
 
-<!-- AUTH PAGE -->
+<!-- AUTH PAGE (igual que original) -->
 <div id="authPage" class="page">
   <div class="auth-wrap">
     <div class="auth-brand">
@@ -367,13 +368,14 @@ let G = {
   nombre: '', email: '', documento: '', direccion: '',
   carrito: [],
   pedidosAll: [], ventasAll: [], usersAll: [],
-  chart: null,
+  chartDir: null, chartPed: null,
   META: 2000000,
+  logoUrl: null,
   stockActual: 0,
 };
 
 // =================================================================
-//  PRECIOS (igual)
+//  PRECIOS (sin cambios)
 // =================================================================
 function calcPrecio(tipo, cant) {
   cant = Number(cant);
@@ -408,7 +410,7 @@ function calcPromoText(tipo) {
 }
 
 // =================================================================
-//  SUPABASE HELPERS (actualizados para ventas directas con estado y factura)
+//  SUPABASE HELPERS (con nuevas funciones para stock y ventas directas con estado)
 // =================================================================
 async function dbLogin(email, pass) {
   const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
@@ -453,6 +455,22 @@ async function dbAllPedidos() {
   if (error) throw error;
   return data || [];
 }
+function genInvoiceNumber(prefix = 'FAC') {
+  const now = Date.now();
+  const highRes = performance && performance.now ? Math.floor(performance.now() * 1000) : 0;
+  const unique = `${now}${highRes}`.toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const userIdPart = G.userId ? '-' + G.userId.slice(-6).toUpperCase() : '';
+  return `${prefix}-${unique}-${random}${userIdPart}`;
+}
+async function dbCreatePedido(p) {
+  const { error } = await window.supabase.from('pedidos').insert(p);
+  if (error) throw error;
+}
+async function dbUpdatePedido(id, upd) {
+  const { error } = await window.supabase.from('pedidos').update(upd).eq('id', id);
+  if (error) throw error;
+}
 async function dbAllVentas() {
   const { data, error } = await window.supabase.from('ventas_directas').select('*').order('fecha', { ascending: false });
   if (error) throw error;
@@ -488,29 +506,12 @@ async function dbCreateSugg(s) {
   const { error } = await window.supabase.from('sugerencias').insert(s);
   if (error) throw error;
 }
-function genInvoiceNumber(prefix = 'FAC') {
-  const now = Date.now();
-  const highRes = performance && performance.now ? Math.floor(performance.now() * 1000) : 0;
-  const unique = `${now}${highRes}`.toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-  const userIdPart = G.userId ? '-' + G.userId.slice(-6).toUpperCase() : '';
-  return `${prefix}-${unique}-${random}${userIdPart}`;
-}
-async function dbCreatePedido(p) {
-  const { error } = await window.supabase.from('pedidos').insert(p);
-  if (error) throw error;
-}
-async function dbUpdatePedido(id, upd) {
-  const { error } = await window.supabase.from('pedidos').update(upd).eq('id', id);
-  if (error) throw error;
-}
 
 // ========== STOCK ==========
 async function getStock() {
   const { data, error } = await window.supabase.from('stock').select('cubetas_disponibles').eq('id', 1).single();
   if (error) {
     if (error.code === 'PGRST116') {
-      // No existe, crear
       await window.supabase.from('stock').insert({ id: 1, cubetas_disponibles: 1000 });
       return 1000;
     }
@@ -525,7 +526,6 @@ async function updateStock(cantidad, motivo, tipoMovimiento = 'ajuste') {
   if (nuevoStock < 0) throw new Error('Stock insuficiente');
   const { error: updateError } = await window.supabase.from('stock').update({ cubetas_disponibles: nuevoStock }).eq('id', 1);
   if (updateError) throw updateError;
-  // Registrar movimiento
   await window.supabase.from('stock_movimientos').insert({
     cantidad: cantidad,
     motivo: motivo,
@@ -548,7 +548,7 @@ async function ajustarStockManual(nuevaCantidad, motivo) {
 }
 
 // =================================================================
-//  UTILS (igual)
+//  UTILS
 // =================================================================
 function pesos(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function fmtDate(d) {
@@ -692,7 +692,7 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE (sin cambios, igual que antes pero con la lógica de pedidos existente)
+//  CLIENT PAGE (sin cambios, igual que el original funcional)
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -914,7 +914,7 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (nueva estructura)
+//  ADMIN PAGE (con pestañas originales + inventario nueva)
 // =================================================================
 async function initAdminPage() {
   console.log('initAdminPage, esAdmin:', G.esAdmin);
@@ -924,9 +924,10 @@ async function initAdminPage() {
   setLogoEl($('adminTopLogo'));
 
   let tabs = [
-    { id: 'transacciones', label: '📋 Transacciones' },
-    { id: 'usuarios', label: '👥 Usuarios' },
+    { id: 'ventas', label: '📊 Ventas' },
+    { id: 'pedidos', label: '📦 Pedidos' },
     { id: 'inventario', label: '📦 Inventario' },
+    { id: 'usuarios', label: '👥 Usuarios' },
     { id: 'sugerencias', label: '💬 Sugerencias' },
     { id: 'respaldo', label: '💾 Respaldo' }
   ];
@@ -935,7 +936,7 @@ async function initAdminPage() {
   const nav = $('adminTabNav');
   const main = $('adminMain');
   nav.innerHTML = tabs.map((t,i) => `<button class="tab-btn${i===0?' active':''}" data-atab="${t.id}">${t.label}</button>`).join('');
-  main.innerHTML = tabs.map(t => `<div id="atab-${t.id}" class="panel${t.id==='transacciones'?' active':''}"></div>`).join('');
+  main.innerHTML = tabs.map(t => `<div id="atab-${t.id}" class="panel${t.id==='ventas'?' active':''}"></div>`).join('');
 
   nav.querySelectorAll('[data-atab]').forEach(btn => {
     btn.onclick = async () => {
@@ -946,112 +947,63 @@ async function initAdminPage() {
       await renderAdminTab(btn.dataset.atab);
     };
   });
-  await renderAdminTab('transacciones');
+  await renderAdminTab('ventas');
   renderFooter('footerAdmin');
 }
 
 async function renderAdminTab(tab) {
   const cont = $(`atab-${tab}`);
   if (!cont) return;
-  if (tab === 'transacciones') await renderAdminTransacciones(cont);
-  if (tab === 'usuarios') await renderAdminUsuarios(cont);
+  if (tab === 'ventas') await renderAdminVentas(cont);
+  if (tab === 'pedidos') await renderAdminPedidos(cont);
   if (tab === 'inventario') await renderAdminInventario(cont);
+  if (tab === 'usuarios') await renderAdminUsuarios(cont);
   if (tab === 'sugerencias') await renderAdminSugerencias(cont);
   if (tab === 'respaldo') renderAdminRespaldo(cont);
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== TRANSACCIONES (unifica pedidos y ventas directas) ==========
-async function renderAdminTransacciones(cont) {
+// ========== VENTAS (exactamente igual que el original, solo que ahora ventas_directas tiene status y invoice_number) ==========
+async function renderAdminVentas(cont) {
+  console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
-    const pedidos = await dbAllPedidos();
-    const ventas = await dbAllVentas();
-    G.pedidosAll = pedidos;
-    G.ventasAll = ventas;
+    const { data: ventas, error: errV } = await supabase.from('ventas_directas').select('*').order('fecha', { ascending: false });
+    const { data: pedidos, error: errP } = await supabase.from('pedidos').select('*').order('fecha', { ascending: false });
+    if (errV) throw errV;
+    if (errP) throw errP;
+    G.ventasAll = ventas || [];
+    G.pedidosAll = pedidos || [];
+    console.log(`Ventas: ${G.ventasAll.length}, Pedidos: ${G.pedidosAll.length}`);
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${e.message}</div>`;
+    return;
+  }
 
-    // Unificar en un solo array con un campo tipo
-    let transacciones = [];
-    pedidos.forEach(p => {
-      transacciones.push({
-        id: p.id,
-        tipo: 'pedido',
-        invoice_number: p.invoice_number,
-        fecha: p.fecha,
-        total: p.total,
-        status: p.status,
-        items: p.items,
-        payment_method: p.payment_method,
-        nota: p.nota,
-        user_id: p.user_id,
-        cant_total: (p.items || []).reduce((s,i) => s + i.cant, 0)
-      });
-    });
-    ventas.forEach(v => {
-      transacciones.push({
-        id: v.id,
-        tipo: 'venta_directa',
-        invoice_number: v.invoice_number,
-        fecha: v.fecha,
-        total: v.total,
-        status: v.status || 'Pendiente',
-        items: [{ cant: v.cant, precio: v.precio_unitario }],
-        payment_method: null,
-        nota: v.nota || '',
-        user_id: v.user_id,
-        cant_total: v.cant,
-        tipo_nombre: v.tipo_nombre
-      });
-    });
-    transacciones.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-    G.transacciones = transacciones;
+  const totalVentas = G.ventasAll.reduce((s,v) => s + v.total, 0);
+  // SOLO PEDIDOS CON ESTADO "Pagado" suman a la meta
+  const totalPedidosPagados = G.pedidosAll.filter(p => p.status === 'Pagado').reduce((s,p) => s + p.total, 0);
+  const total = totalVentas + totalPedidosPagados;
+  const pct = Math.min(100, (total / G.META) * 100);
+  const falta = Math.max(0, G.META - total);
 
-    const totalPagado = transacciones.filter(t => t.status === 'Pagado').reduce((s,t) => s + t.total, 0);
-    const pct = Math.min(100, (totalPagado / G.META) * 100);
-    const falta = Math.max(0, G.META - totalPagado);
-
-    let tablaHtml = `<div class="data-table-wrap"><table class="data-table"><thead>
-      <tr><th>Tipo</th><th>Factura</th><th>Fecha</th><th>Detalle</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
-    </thead><tbody>`;
-    transacciones.forEach(t => {
-      let detalle = '';
-      if (t.tipo === 'pedido') {
-        detalle = `${t.cant_total} cubetas · ${t.payment_method || 'N/E'}`;
-      } else {
-        detalle = `${t.cant_total} cubetas · ${t.tipo_nombre || 'Venta directa'}`;
-      }
-      let badgeClass = '';
-      if (t.status === 'Pendiente') badgeClass = 'badge-pending';
-      else if (t.status === 'Pagado') badgeClass = 'badge-pagado';
-      else if (t.status === 'Cancelado') badgeClass = 'badge-canceled';
-      else badgeClass = 'badge-pending';
-      tablaHtml += `
-        <tr>
-          <td>${t.tipo === 'pedido' ? '📱 Pedido cliente' : '💰 Venta directa'}</td>
-          <td><strong>${t.invoice_number}</strong></td>
-          <td>${fmtDate(t.fecha)}</td>
-          <td>${detalle}</td>
-          <td>${pesos(t.total)}</td>
-          <td><span class="badge ${badgeClass}">${t.status}</span></td>
-          <td>
-            ${t.status === 'Pendiente' ? `<button class="btn btn-success btn-sm" onclick="marcarPagado('${t.tipo}', '${t.id}')">Pagar</button>` : ''}
-            ${t.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarTransaccion('${t.tipo}', '${t.id}')">Cancelar</button>` : ''}
-            <button class="btn btn-outline btn-sm" onclick="verFactura('${t.tipo}', '${t.id}')">Factura</button>
-          </td>
-        </tr>`;
-    });
-    tablaHtml += `</tbody></table></div>`;
-
-    cont.innerHTML = `
-      <div class="meta-hero">
-        <div class="meta-label">Meta de ganancias</div>
-        <div class="meta-goal">${pesos(G.META)}</div>
-        <div class="meta-progress"><div class="meta-fill" style="width:${pct}%"></div></div>
-        <div class="meta-row">
-          <div><div class="meta-pct">${Math.floor(pct)}%</div><div>Acumulado (solo pagado): ${pesos(totalPagado)}</div><div>Faltante: ${pesos(falta)}</div></div>
-          <div class="meta-figure">🥚</div>
-        </div>
+  cont.innerHTML = `
+    <div class="meta-hero">
+      <div class="meta-label">Meta de ganancias</div>
+      <div class="meta-goal">${pesos(G.META)}</div>
+      <div class="meta-progress"><div class="meta-fill" style="width:${pct}%"></div></div>
+      <div class="meta-row">
+        <div><div class="meta-pct">${Math.floor(pct)}%</div><div>Acumulado: ${pesos(total)}</div><div>Faltante: ${pesos(falta)}</div></div>
+        <div class="meta-figure">🥚</div>
       </div>
+    </div>
+    <div class="grid-4" style="margin-bottom:1.25rem">
+      <div class="stat-card"><div class="stat-val">${pesos(totalVentas)}</div><div class="stat-label">Ventas directas</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalPedidosPagados)}</div><div class="stat-label">Pedidos app (Pagados)</div></div>
+      <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Transacciones</div></div>
+      <div class="stat-card"><div class="stat-val">${Math.floor(pct)}%</div><div class="stat-label">% de meta</div></div>
+    </div>
+    <div class="grid-2">
       <div class="card">
         <div class="card-title">➕ Registrar venta directa</div>
         <div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="vCant" min="1" max="500" value="1"></div>
@@ -1063,21 +1015,24 @@ async function renderAdminTransacciones(cont) {
           <select id="vTipoSelect"><option value="">Automático</option><option value="bodega">Bodega</option><option value="restaurante">Restaurante</option><option value="comida_rapida">Comida rápida</option></select>
         </div>
         <div class="total-bar">Total: <span id="vTotalPreview">$4.900</span></div>
-        <button class="btn btn-primary btn-block" id="btnRegistrarVenta">Registrar venta directa</button>
+        <button class="btn btn-primary btn-block" id="btnRegistrarVenta">Registrar venta</button>
         <div id="vMsg"></div>
       </div>
       <div class="card">
-        <div class="card-title">📊 Ventas por día (transacciones pagadas)</div>
-        <canvas id="ventasChart" height="100"></canvas>
+        <div class="card-title">📈 Últimos pedidos</div>
+        <div id="ultimosPedidosList"></div>
+        <button class="btn btn-ghost btn-sm" id="exportPedidosBtn">CSV pedidos</button>
+        <button class="btn btn-ghost btn-sm" id="exportVentasBtn">CSV ventas</button>
       </div>
-      <div class="card">
-        <div class="card-title">📋 Todas las transacciones</div>
-        ${tablaHtml}
-      </div>`;
+    </div>
+    <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>
+    <div class="card"><div class="card-title">📈 Pedidos app por día</div><canvas id="chartPed" height="100"></canvas></div>`;
 
-    // Inicializar registro de venta directa
+  requestAnimationFrame(() => {
     const vCant = $('vCant');
     const vTipoSelect = $('vTipoSelect');
+    if (!vCant || !vTipoSelect) return;
+
     const updatePreview = () => {
       const cant = parseInt(vCant.value) || 0;
       let tipoForzado = vTipoSelect.value;
@@ -1115,66 +1070,248 @@ async function renderAdminTransacciones(cont) {
       }
       try {
         const invoice = genInvoiceNumber('VD');
-        await dbCreateVenta({
-          user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio,
-          total: cant * precio, nota: '', fecha: new Date().toISOString(),
-          status: 'Pendiente', invoice_number: invoice
-        });
-        showMsg('vMsg', `✅ Venta directa registrada. Factura: ${invoice}`, 'success');
+        await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString(), status: 'Pendiente', invoice_number: invoice });
+        showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}. Factura: ${invoice}`, 'success');
         vCant.value = 1;
         updatePreview();
-        await renderAdminTab('transacciones');
-        await renderAdminTab('inventario'); // actualizar stock
+        await renderAdminTab('ventas');
+        await renderAdminTab('pedidos'); // para actualizar lista unificada
+        await renderAdminTab('inventario');
       } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
     };
 
-    // Gráfico
-    const pagadas = transacciones.filter(t => t.status === 'Pagado');
+    const lista = $('ultimosPedidosList');
+    if (lista) {
+      if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
+      else {
+        lista.innerHTML = G.pedidosAll.slice(0,10).map(p => {
+          let badgeEstado = '';
+          if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
+          else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
+          else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
+          else badgeEstado = 'badge-pending';
+          return `
+          <div class="order-card">
+            <div class="order-meta">
+              <span class="order-num">${p.invoice_number}</span>
+              <span class="badge ${badgeEstado}">${p.status}</span>
+              <span class="order-total">${pesos(p.total)}</span>
+            </div>
+            <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
+            <div class="order-note">${p.nota ? `📝 ${p.nota}` : ''}</div>
+            <div style="margin-top:8px">
+              ${p.status === 'Pendiente' ? `<button class="btn btn-info btn-sm" onclick="marcarEntregado('${p.id}')">Marcar Entregado</button>` : ''}
+              ${(p.status === 'Pendiente' || p.status === 'Entregado') ? `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${p.id}')">Marcar Pagado</button>` : ''}
+              ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${p.id}')">Cancelar</button>` : ''}
+            </div>
+          </div>
+        `}).join('');
+      }
+    }
+
+    $('exportPedidosBtn').onclick = () => {
+      let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
+      G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    };
+    $('exportVentasBtn').onclick = () => {
+      let csv = 'Factura,Fecha,Tipo,Cantidad,Precio Unitario,Total,Estado,Nota\n';
+      G.ventasAll.forEach(v => csv += `"${v.invoice_number || 'N/A'}","${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    };
+
+    renderChartDir();
+    renderChartPed();
+  });
+}
+
+// Funciones auxiliares para ventas (admin) - actualizan stock al pagar
+window.marcarEntregado = async (id) => {
+  await dbUpdatePedido(id, { status: 'Entregado' });
+  await renderAdminTab('ventas');
+  await renderAdminTab('pedidos');
+};
+window.marcarPagadoPedido = async (id) => {
+  const pedido = G.pedidosAll.find(p => p.id == id);
+  if (pedido) {
+    const cantidad = (pedido.items || []).reduce((s,i) => s + i.cant, 0);
+    try {
+      await updateStock(-cantidad, `Pago de pedido ${pedido.invoice_number}`, 'venta');
+      await dbUpdatePedido(id, { status: 'Pagado' });
+      alert('Pedido marcado como pagado. Stock actualizado.');
+    } catch(e) { alert('Error al actualizar stock: ' + e.message); }
+  }
+  await renderAdminTab('ventas');
+  await renderAdminTab('pedidos');
+  await renderAdminTab('inventario');
+};
+window.cancelarPedido = async (id) => {
+  if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
+    await dbUpdatePedido(id, { status: 'Cancelado' });
+    await renderAdminTab('ventas');
+    await renderAdminTab('pedidos');
+  }
+};
+window.marcarPagadoVenta = async (id) => {
+  const venta = G.ventasAll.find(v => v.id == id);
+  if (venta) {
+    try {
+      await updateStock(-venta.cant, `Pago de venta directa ${venta.invoice_number || 'sin factura'}`, 'venta');
+      await dbUpdateVenta(id, { status: 'Pagado' });
+      alert('Venta directa marcada como pagada. Stock actualizado.');
+    } catch(e) { alert('Error al actualizar stock: ' + e.message); }
+  }
+  await renderAdminTab('ventas');
+  await renderAdminTab('pedidos');
+  await renderAdminTab('inventario');
+};
+window.cancelarVenta = async (id) => {
+  if (confirm('¿Cancelar esta venta directa? Esta acción no se puede deshacer.')) {
+    await dbUpdateVenta(id, { status: 'Cancelado' });
+    await renderAdminTab('ventas');
+    await renderAdminTab('pedidos');
+  }
+};
+
+function renderChartDir() {
+  const canvas = $('chartDir');
+  if (!canvas) return;
+  const mapa = new Map();
+  G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
+  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+  if (G.chartDir) G.chartDir.destroy();
+  if (!sorted.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
+  G.chartDir = new Chart(canvas, {
+    type: 'bar',
+    data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas directas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
+  });
+}
+function renderChartPed() {
+  const canvas = $('chartPed');
+  if (!canvas) return;
+  const mapa = new Map();
+  G.pedidosAll.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
+  const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+  if (G.chartPed) G.chartPed.destroy();
+  if (!sorted.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
+  G.chartPed = new Chart(canvas, {
+    type: 'bar',
+    data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Pedidos app', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(59,107,59,0.75)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
+  });
+}
+
+// ========== PEDIDOS (AHORA UNIFICA PEDIDOS Y VENTAS DIRECTAS) ==========
+async function renderAdminPedidos(cont) {
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  try {
+    const pedidos = await dbAllPedidos();
+    const ventas = await dbAllVentas();
+    // Unificar en un solo array con tipo
+    let items = [];
+    pedidos.forEach(p => {
+      items.push({
+        id: p.id,
+        tipo: 'pedido',
+        invoice: p.invoice_number,
+        fecha: p.fecha,
+        total: p.total,
+        status: p.status,
+        detalle: `${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${p.payment_method || 'N/E'}`,
+        nota: p.nota,
+        user_id: p.user_id,
+        cantidad_total: (p.items||[]).reduce((s,i)=>s+i.cant,0)
+      });
+    });
+    ventas.forEach(v => {
+      items.push({
+        id: v.id,
+        tipo: 'venta_directa',
+        invoice: v.invoice_number || 'N/A',
+        fecha: v.fecha,
+        total: v.total,
+        status: v.status || 'Pendiente',
+        detalle: `${v.cant} cubetas · ${v.tipo_nombre || 'Venta directa'}`,
+        nota: v.nota || '',
+        user_id: v.user_id,
+        cantidad_total: v.cant
+      });
+    });
+    items.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+    let html = `<div class="card"><div class="card-title">📦 Todas las transacciones (pedidos + ventas directas)</div>
+      <div class="filter-bar" id="pedFilterBarAdmin">
+        <button class="chip active" data-status="todos">Todos</button>
+        <button class="chip" data-status="Pendiente">Pendientes</button>
+        <button class="chip" data-status="Pagado">Pagados</button>
+        <button class="chip" data-status="Cancelado">Cancelados</button>
+      </div>
+      <div id="adminPedidosList"></div>
+    </div>
+    <div class="card"><div class="card-title">📊 Transacciones por día (pagadas)</div><canvas id="transChart" height="100"></canvas></div>`;
+    cont.innerHTML = html;
+
+    const renderList = (status) => {
+      const list = status === 'todos' ? items : items.filter(i => i.status === status);
+      const container = $('adminPedidosList');
+      if (!container) return;
+      if (!list.length) { container.innerHTML = '<div class="cart-empty">Sin transacciones</div>'; return; }
+      container.innerHTML = list.map(item => {
+        let badgeClass = '';
+        if (item.status === 'Pendiente') badgeClass = 'badge-pending';
+        else if (item.status === 'Pagado') badgeClass = 'badge-pagado';
+        else if (item.status === 'Cancelado') badgeClass = 'badge-canceled';
+        else badgeClass = 'badge-pending';
+        const tipoLabel = item.tipo === 'pedido' ? '📱 Pedido cliente' : '💰 Venta directa';
+        return `
+        <div class="order-card">
+          <div class="order-meta">
+            <div><span class="order-num">${tipoLabel} · ${item.invoice}</span> <span class="badge ${badgeClass}">${item.status}</span></div>
+            <span class="order-date">${fmtDate(item.fecha)}</span>
+          </div>
+          <div>${item.detalle} · ${pesos(item.total)}</div>
+          ${item.nota ? `<div class="muted">📝 ${item.nota}</div>` : ''}
+          <div style="margin-top:8px">
+            ${item.status === 'Pendiente' ? (item.tipo === 'pedido' ? 
+              `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${item.id}')">Pagar</button>` :
+              `<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta('${item.id}')">Pagar</button>`) : ''}
+            ${item.status === 'Pendiente' ? (item.tipo === 'pedido' ?
+              `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${item.id}')">Cancelar</button>` :
+              `<button class="btn btn-danger btn-sm" onclick="cancelarVenta('${item.id}')">Cancelar</button>`) : ''}
+            <button class="btn btn-outline btn-sm" onclick="verFactura('${item.tipo}', '${item.id}')">Factura</button>
+          </div>
+        </div>
+      `}).join('');
+    };
+
+    const chips = cont.querySelectorAll('[data-status]');
+    chips.forEach(chip => {
+      chip.onclick = () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderList(chip.dataset.status);
+      };
+    });
+    renderList('todos');
+
+    // Gráfico de transacciones pagadas por día
+    const pagadas = items.filter(i => i.status === 'Pagado');
     const mapa = new Map();
-    pagadas.forEach(t => { const d = fmtDateShort(t.fecha); mapa.set(d, (mapa.get(d) || 0) + t.total); });
+    pagadas.forEach(i => { const d = fmtDateShort(i.fecha); mapa.set(d, (mapa.get(d) || 0) + i.total); });
     const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
-    const ctx = document.getElementById('ventasChart').getContext('2d');
-    if (G.chart) G.chart.destroy();
+    const ctx = document.getElementById('transChart').getContext('2d');
+    if (window.transChart) window.transChart.destroy();
     if (sorted.length) {
-      G.chart = new Chart(ctx, {
+      window.transChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas (pagadas)', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)' }] },
+        data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas pagadas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(44,125,160,0.75)' }] },
         options: { responsive: true, scales: { y: { ticks: { callback: v => pesos(v) } } } }
       });
     } else {
       ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
     }
 
-    // Funciones globales para acciones
-    window.marcarPagado = async (tipo, id) => {
-      if (tipo === 'pedido') {
-        await dbUpdatePedido(id, { status: 'Pagado' });
-        const pedido = G.pedidosAll.find(p => p.id == id);
-        if (pedido) {
-          const cantidad = (pedido.items || []).reduce((s,i) => s + i.cant, 0);
-          try {
-            await updateStock(-cantidad, `Pago de pedido ${pedido.invoice_number}`, 'venta');
-          } catch(e) { alert('Error al actualizar stock: ' + e.message); }
-        }
-      } else if (tipo === 'venta_directa') {
-        await dbUpdateVenta(id, { status: 'Pagado' });
-        const venta = G.ventasAll.find(v => v.id == id);
-        if (venta) {
-          await updateStock(-venta.cant, `Pago de venta directa ${venta.invoice_number}`, 'venta');
-        }
-      }
-      await renderAdminTab('transacciones');
-      await renderAdminTab('inventario');
-    };
-    window.cancelarTransaccion = async (tipo, id) => {
-      if (!confirm('¿Cancelar esta transacción? Solo puede cancelarse si está pendiente.')) return;
-      if (tipo === 'pedido') {
-        await dbUpdatePedido(id, { status: 'Cancelado' });
-      } else if (tipo === 'venta_directa') {
-        await dbUpdateVenta(id, { status: 'Cancelado' });
-      }
-      await renderAdminTab('transacciones');
-    };
     window.verFactura = async (tipo, id) => {
       let transaccion;
       if (tipo === 'pedido') transaccion = G.pedidosAll.find(p => p.id == id);
@@ -1194,7 +1331,7 @@ async function renderAdminTransacciones(cont) {
         <div class="invoice">
           <div class="invoice-header">
             <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div>
-            <div class="invoice-num">${transaccion.invoice_number}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
+            <div class="invoice-num">${transaccion.invoice_number || 'N/A'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
           </div>
           <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
           <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
@@ -1202,6 +1339,47 @@ async function renderAdminTransacciones(cont) {
         </div>`;
       $('invoiceModal').classList.remove('hidden');
     };
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  }
+}
+
+// ========== INVENTARIO (nuevo) ==========
+async function renderAdminInventario(cont) {
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  try {
+    const stock = await getStock();
+    const { data: movimientos, error } = await supabase.from('stock_movimientos').select('*').order('fecha', { ascending: false }).limit(50);
+    if (error) throw error;
+    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
+    (movimientos || []).forEach(m => {
+      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
+    });
+    movimientosHtml += `</tbody></table></div>`;
+    cont.innerHTML = `
+      <div class="card stock-card">
+        <div><strong>🥚 Cubetas disponibles:</strong> <span class="stock-number" id="stockNum">${stock}</span></div>
+        <div>
+          <label style="font-size:0.8rem;">Ajustar stock:</label>
+          <input type="number" id="nuevoStock" value="${stock}" step="1" style="width:120px; margin:0 8px;">
+          <button class="btn btn-primary btn-sm" id="btnAjustarStock">Actualizar</button>
+          <button class="btn btn-ghost btn-sm" id="btnRefrescarStock">⟳</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📜 Historial de movimientos (últimos 50)</div>
+        ${movimientosHtml}
+      </div>`;
+    $('#btnAjustarStock').onclick = async () => {
+      const nuevo = parseInt($('#nuevoStock').value);
+      if (isNaN(nuevo) || nuevo < 0) { alert('Stock inválido'); return; }
+      try {
+        await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
+        await renderAdminInventario(cont);
+        await renderAdminTab('ventas'); // opcional
+      } catch(e) { alert('Error: ' + e.message); }
+    };
+    $('#btnRefrescarStock').onclick = () => renderAdminInventario(cont);
   } catch(e) {
     cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
   }
@@ -1266,48 +1444,6 @@ async function renderAdminUsuarios(cont) {
   }
 }
 
-// ========== INVENTARIO ==========
-async function renderAdminInventario(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
-  try {
-    const stock = await getStock();
-    const { data: movimientos, error } = await supabase.from('stock_movimientos').select('*').order('fecha', { ascending: false }).limit(50);
-    if (error) throw error;
-    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
-    (movimientos || []).forEach(m => {
-      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
-    });
-    movimientosHtml += `</tbody></table></div>`;
-    cont.innerHTML = `
-      <div class="card stock-card">
-        <div><strong>🥚 Cubetas disponibles:</strong> <span class="stock-number" id="stockNum">${stock}</span></div>
-        <div>
-          <label style="font-size:0.8rem;">Ajustar stock:</label>
-          <input type="number" id="nuevoStock" value="${stock}" step="1" style="width:120px; margin:0 8px;">
-          <button class="btn btn-primary btn-sm" id="btnAjustarStock">Actualizar</button>
-          <button class="btn btn-ghost btn-sm" id="btnRefrescarStock">⟳</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">📜 Historial de movimientos (últimos 50)</div>
-        ${movimientosHtml}
-      </div>
-    `;
-    $('#btnAjustarStock').onclick = async () => {
-      const nuevo = parseInt($('#nuevoStock').value);
-      if (isNaN(nuevo) || nuevo < 0) { alert('Stock inválido'); return; }
-      try {
-        await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
-        await renderAdminInventario(cont);
-        await renderAdminTab('transacciones'); // para actualizar stock en vista?
-      } catch(e) { alert('Error: ' + e.message); }
-    };
-    $('#btnRefrescarStock').onclick = () => renderAdminInventario(cont);
-  } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
-  }
-}
-
 // ========== SUGERENCIAS (igual) ==========
 async function renderAdminSugerencias(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -1328,7 +1464,7 @@ async function renderAdminSugerencias(cont) {
   }
 }
 
-// ========== RESPALDO (sin botón de soft delete) ==========
+// ========== RESPALDO (sin soft delete, solo export) ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
   cont.innerHTML = `
@@ -1375,8 +1511,8 @@ function renderAdminRespaldo(cont) {
   $('#exportVentasFull').onclick = async () => {
     const { data } = await supabase.from('ventas_directas').select('*');
     if (!data || !data.length) { alert('No hay ventas directas'); return; }
-    let csv = 'Factura,Fecha,Cantidad,Precio Unitario,Total,Estado,Nota\n';
-    data.forEach(v => csv += `"${v.invoice_number}","${fmtDate(v.fecha)}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
+    let csv = 'Factura,Fecha,Tipo,Cantidad,Precio Unitario,Total,Estado,Nota\n';
+    data.forEach(v => csv += `"${v.invoice_number || 'N/A'}","${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
   $('#exportStockMovimientos').onclick = async () => {
