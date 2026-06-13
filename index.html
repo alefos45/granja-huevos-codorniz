@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS (sin cambios, solo añadimos .logo-small y .shipping-card) ========== */
+/* ========== ESTILOS (iguales que la última versión) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -371,14 +371,14 @@ let G = {
   nombre: '', email: '', documento: '', direccion: '',
   carrito: [],
   pedidosAll: [], ventasAll: [], usersAll: [],
-  chartDir: null, chartPed: null,
+  chartDir: null, chartPed: null, transChart: null,
   META: 2000000,
   logoUrl: null,
   stockActual: 0,
 };
 
 // =================================================================
-//  PRECIOS (sin cambios)
+//  PRECIOS
 // =================================================================
 function calcPrecio(tipo, cant) {
   cant = Number(cant);
@@ -413,7 +413,7 @@ function calcPromoText(tipo) {
 }
 
 // =================================================================
-//  SUPABASE HELPERS (sin cambios, pero añadimos helpers para logo)
+//  SUPABASE HELPERS
 // =================================================================
 async function dbLogin(email, pass) {
   const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
@@ -551,7 +551,7 @@ async function ajustarStockManual(nuevaCantidad, motivo) {
 }
 
 // =================================================================
-//  UTILS (incluyendo funciones de logo)
+//  UTILS
 // =================================================================
 function pesos(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function fmtDate(d) {
@@ -579,7 +579,6 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch(_) { return nu
 function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Función mejorada para mostrar el logo (imagen o emoji)
 function setLogoEl(el) {
   if (!el) return;
   const saved = lsGet('granjaLogo');
@@ -589,8 +588,6 @@ function setLogoEl(el) {
     el.innerHTML = `<img src="logo.svg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:1.4rem;line-height:44px;text-align:center;display:block\'>🥚</span>'">`;
   }
 }
-
-// Actualizar logo en pantalla de autenticación
 function updateAuthLogo() {
   const authImg = document.getElementById('authLogoImg');
   const authFallback = document.getElementById('authLogoFallback');
@@ -604,8 +601,6 @@ function updateAuthLogo() {
     authFallback.style.display = 'block';
   }
 }
-
-// Renderizar políticas de envío en cliente
 function renderShippingCard() {
   return `
     <div class="shipping-card">
@@ -616,7 +611,6 @@ function renderShippingCard() {
     </div>
   `;
 }
-
 function renderFooter(id) {
   const el = $(id);
   if (!el) return;
@@ -667,12 +661,10 @@ function initModals() {
     reader.onload = ev => {
       const url = ev.target.result;
       lsSet('granjaLogo', url);
-      // Actualizar logos en barras superiores
       ['clientTopLogo','adminTopLogo'].forEach(id => {
         const el = $(id);
         if (el) setLogoEl(el);
       });
-      // Actualizar logo en auth
       updateAuthLogo();
     };
     reader.readAsDataURL(file);
@@ -680,7 +672,7 @@ function initModals() {
 }
 
 // =================================================================
-//  AUTH PAGE (con mejora de logo)
+//  AUTH PAGE
 // =================================================================
 function initAuthPage() {
   const tL = $('tabLoginBtn'), tR = $('tabRegisterBtn'), pL = $('loginPanel'), pR = $('registerPanel');
@@ -723,11 +715,11 @@ function initAuthPage() {
     finally { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
   };
   renderFooter('footerAuth');
-  updateAuthLogo(); // Mostrar logo guardado si existe
+  updateAuthLogo();
 }
 
 // =================================================================
-//  CLIENT PAGE (con políticas de envío añadidas en la pestaña de pedido)
+//  CLIENT PAGE
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -943,7 +935,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody><tr></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -952,7 +944,7 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (sin cambios relevantes, ya tenía políticas de envío)
+//  ADMIN PAGE
 // =================================================================
 async function initAdminPage() {
   console.log('initAdminPage, esAdmin:', G.esAdmin);
@@ -1001,7 +993,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS (igual que la versión anterior, con ajustes de logo) ==========
+// ========== VENTAS ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -1330,14 +1322,15 @@ async function renderAdminPedidos(cont) {
     });
     renderList('todos');
 
+    // Gráfico de transacciones pagadas por día
     const pagadas = items.filter(i => i.status === 'Pagado');
     const mapa = new Map();
     pagadas.forEach(i => { const d = fmtDateShort(i.fecha); mapa.set(d, (mapa.get(d) || 0) + i.total); });
     const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
     const ctx = document.getElementById('transChart').getContext('2d');
-    if (window.transChart) window.transChart.destroy();
+    if (G.transChart && typeof G.transChart.destroy === 'function') G.transChart.destroy();
     if (sorted.length) {
-      window.transChart = new Chart(ctx, {
+      G.transChart = new Chart(ctx, {
         type: 'bar',
         data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas pagadas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(44,125,160,0.75)' }] },
         options: { responsive: true, scales: { y: { ticks: { callback: v => pesos(v) } } } }
@@ -1404,22 +1397,32 @@ async function renderAdminInventario(cont) {
         <div class="card-title">📜 Historial de movimientos (últimos 50)</div>
         ${movimientosHtml}
       </div>`;
-    $('#btnAjustarStock').onclick = async () => {
-      const nuevo = parseInt($('#nuevoStock').value);
-      if (isNaN(nuevo) || nuevo < 0) { alert('Stock inválido'); return; }
-      try {
-        await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
-        await renderAdminInventario(cont);
-        await renderAdminTab('ventas');
-      } catch(e) { alert('Error: ' + e.message); }
-    };
-    $('#btnRefrescarStock').onclick = () => renderAdminInventario(cont);
+    
+    // Asignar eventos después de que el DOM esté listo
+    requestAnimationFrame(() => {
+      const btnAjustar = document.getElementById('btnAjustarStock');
+      const btnRefrescar = document.getElementById('btnRefrescarStock');
+      if (btnAjustar) {
+        btnAjustar.onclick = async () => {
+          const nuevo = parseInt(document.getElementById('nuevoStock').value);
+          if (isNaN(nuevo) || nuevo < 0) { alert('Stock inválido'); return; }
+          try {
+            await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
+            await renderAdminInventario(cont);
+            await renderAdminTab('ventas');
+          } catch(e) { alert('Error: ' + e.message); }
+        };
+      }
+      if (btnRefrescar) {
+        btnRefrescar.onclick = () => renderAdminInventario(cont);
+      }
+    });
   } catch(e) {
     cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
   }
 }
 
-// ========== USUARIOS (con políticas de envío) ==========
+// ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
