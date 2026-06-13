@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS COMPLETOS (última versión funcional) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -124,7 +123,6 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .total-bar .total-num { font-family: var(--font-head); font-size: 1.2rem; color: var(--c-brown); }
 .promo-banner { background: linear-gradient(95deg, #fff4d6, #ffeab5); border-left: 5px solid var(--c-amber2); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 0.75rem 1.1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 600; color: var(--c-brown2); font-size: 0.95rem; }
 .cart-empty { text-align: center; padding: 2.5rem 1rem; color: var(--c-muted); font-style: italic; font-size: 1.1rem; }
-.cart-empty .egg-empty { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.4; }
 .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px dashed var(--c-border); }
 .cart-row:last-of-type { border-bottom: none; }
 .cart-total { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: var(--c-pale); border-radius: var(--r-sm); font-weight: 700; margin-top: 0.5rem; }
@@ -204,6 +202,9 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .recovery-form { margin-top: 1rem; }
 .link-forgot { cursor: pointer; color: var(--c-amber); font-size: 0.85rem; text-align: right; margin-top: 0.5rem; display: inline-block; }
 .link-forgot:hover { text-decoration: underline; }
+.new-orders-card { background: #fef7e0; border-left: 6px solid var(--c-amber); cursor: pointer; transition: transform 0.2s; margin-bottom: 1rem; }
+.new-orders-card:hover { transform: scale(1.01); background: #fff2cc; }
+.order-contact-info { background: #f9f5f0; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; }
 @media(max-width:768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .form-row.c2 { grid-template-columns: 1fr; }
@@ -361,7 +362,6 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
   </div>
 </div>
 
-<!-- Modal para olvido de contraseña -->
 <div id="forgotModal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-title">🔐 Recuperar contraseña</div>
@@ -376,7 +376,6 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
   </div>
 </div>
 
-<!-- Modal para establecer nueva contraseña (al recuperar) -->
 <div id="newPasswordModal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-title">✨ Nueva contraseña</div>
@@ -388,6 +387,16 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
     <div class="modal-actions">
       <button class="btn btn-success" id="updatePasswordBtn">Actualizar contraseña</button>
       <button class="btn btn-ghost" id="closeNewPassBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="newOrdersModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width: 700px;">
+    <div class="modal-title">📦 Pedidos nuevos</div>
+    <div id="newOrdersList" style="max-height: 60vh; overflow-y: auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="closeNewOrdersBtn">Cerrar</button>
     </div>
   </div>
 </div>
@@ -663,10 +672,6 @@ function renderFooter(id) {
   $(`sup_${id}`).onclick = () => $('supportModal').classList.remove('hidden');
   $(`sug_${id}`).onclick = () => $('suggestionModal').classList.remove('hidden');
 }
-
-// =================================================================
-//  FUNCIÓN PARA OBTENER LOGO CON TAMAÑO VARIABLE
-// =================================================================
 function getLogoHtml(size = '40px') {
   const saved = lsGet('granjaLogo');
   if (saved) {
@@ -699,7 +704,13 @@ function initModals() {
   };
   $('printInvoiceBtn').onclick = () => window.print();
   $('closeInvoiceBtn').onclick = () => $('invoiceModal').classList.add('hidden');
-  [$('invoiceModal'), $('suggestionModal'), $('supportModal')].forEach(m => {
+  document.getElementById('closeNewOrdersBtn').onclick = () => {
+    document.getElementById('newOrdersModal').classList.add('hidden');
+    const now = new Date().toISOString();
+    lsSet('adminLastCheck', now);
+    renderAdminTab('ventas');
+  };
+  [$('invoiceModal'), $('suggestionModal'), $('supportModal'), $('newOrdersModal')].forEach(m => {
     if (m) m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
   });
   $('logoFileInput').onchange = e => {
@@ -791,7 +802,6 @@ function initForgotPassword() {
     }
   };
 }
-
 function handleRecoveryToken() {
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const accessToken = hashParams.get('access_token');
@@ -814,7 +824,6 @@ function initAuthPage() {
   tL.onclick = () => { tL.classList.add('active'); tR.classList.remove('active'); pL.classList.remove('hidden'); pR.classList.add('hidden'); clearMsg('loginErr'); };
   tR.onclick = () => { tR.classList.add('active'); tL.classList.remove('active'); pR.classList.remove('hidden'); pL.classList.add('hidden'); clearMsg('registerErr'); };
   [$('loginEmail'), $('loginPass')].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); }));
-
   $('loginBtn').onclick = async () => {
     const btn = $('loginBtn');
     const email = $('loginEmail').value.trim();
@@ -826,7 +835,6 @@ function initAuthPage() {
       location.reload();
     } catch(e) { showMsg('loginErr', e.message || 'Error al iniciar sesión', 'error'); btn.disabled = false; btn.textContent = 'Ingresar'; }
   };
-
   $('registerBtn').onclick = async () => {
     const btn = $('registerBtn');
     const email = $('regEmail').value.trim();
@@ -855,14 +863,13 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE (con logo en carrito vacío y sin pedidos)
+//  CLIENT PAGE
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
   $('clientSub').textContent = G.tipo;
   $('clientLogout').onclick = () => { window.supabase.auth.signOut().then(() => location.reload()); };
   setLogoEl($('clientTopLogo'));
-
   const nav = $('clientTabNav');
   const main = $('clientMain');
   nav.innerHTML = [
@@ -890,7 +897,6 @@ function initClientPage() {
   initClientOrderPanel();
   renderFooter('footerClient');
 }
-
 function buildClientOrderPanel() {
   return `
     <div class="promo-banner"><i class="fas fa-tag"></i> <span id="promoText"></span></div>
@@ -922,7 +928,6 @@ function buildClientOrderPanel() {
       </div>
     </div>`;
 }
-
 function initClientOrderPanel() {
   $('promoText').textContent = calcPromoText(G.tipo);
   updateClientPrice();
@@ -965,7 +970,6 @@ function renderCart() {
   $('cartCount').textContent = `${tc} cubeta${tc>1?'s':''}`;
 }
 window.removeFromCart = i => { G.carrito.splice(i,1); renderCart(); };
-
 async function confirmOrder() {
   if (!G.carrito.length) { showMsg('orderMsg', 'Agrega al menos un item al carrito', 'warn'); return; }
   const btn = $('confirmOrderBtn');
@@ -1006,7 +1010,6 @@ async function confirmOrder() {
   } catch(e) { showMsg('orderMsg', '❌ ' + (e.message || 'Error al confirmar'), 'error'); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar pedido'; }
 }
-
 async function loadClientOrders() {
   const cont = $('clientOrders');
   if (!cont) return;
@@ -1047,18 +1050,18 @@ async function loadClientOrders() {
       </div>`}).join('');
   } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error al cargar pedidos: ${escHtml(e.message)}</div>`; }
 }
-
 window.clienteCancelarPedido = async (id) => {
   if (confirm('¿Cancelar este pedido? Solo puedes cancelar dentro de los 30 minutos posteriores a la creación.')) {
     await dbUpdatePedido(id, { status: 'Cancelado' });
     await loadClientOrders();
   }
 };
-
+// Factura en cliente con datos de contacto
 window.showClientInvoice = async (pedidoId) => {
   const pedidos = await dbPedidosUser(G.userId);
   const p = pedidos.find(x => x.id === pedidoId);
   if (!p) return;
+  const { data: usuario } = await supabase.from('usuarios').select('nombre, telefono, whatsapp, direccion').eq('user_id', p.user_id).single();
   let badgeEstado = '';
   if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
   else if (p.status === 'Entregado') badgeEstado = 'badge-pending';
@@ -1070,8 +1073,8 @@ window.showClientInvoice = async (pedidoId) => {
         <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7 · Venta huevos de codorniz</div></div>
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
-      <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Cliente</h4><p><strong>${usuario?.nombre || G.nombre}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<table><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -1088,7 +1091,6 @@ async function initAdminPage() {
   $('adminLogout').onclick = () => { window.supabase.auth.signOut().then(() => location.reload()); };
   $('adminTopLogo').onclick = () => $('logoFileInput').click();
   setLogoEl($('adminTopLogo'));
-
   let tabs = [
     { id: 'ventas', label: '📊 Ventas' },
     { id: 'pedidos', label: '📦 Pedidos' },
@@ -1098,12 +1100,10 @@ async function initAdminPage() {
     { id: 'respaldo', label: '💾 Respaldo' }
   ];
   if (G.esAdmin) tabs.push({ id: 'admins', label: '👑 Super Admin' });
-
   const nav = $('adminTabNav');
   const main = $('adminMain');
   nav.innerHTML = tabs.map((t,i) => `<button class="tab-btn${i===0?' active':''}" data-atab="${t.id}">${t.label}</button>`).join('');
   main.innerHTML = tabs.map(t => `<div id="atab-${t.id}" class="panel${t.id==='ventas'?' active':''}"></div>`).join('');
-
   nav.querySelectorAll('[data-atab]').forEach(btn => {
     btn.onclick = async () => {
       nav.querySelectorAll('[data-atab]').forEach(b => b.classList.remove('active'));
@@ -1116,7 +1116,6 @@ async function initAdminPage() {
   await renderAdminTab('ventas');
   renderFooter('footerAdmin');
 }
-
 async function renderAdminTab(tab) {
   const cont = $(`atab-${tab}`);
   if (!cont) return;
@@ -1129,7 +1128,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS ==========
+// ========== VENTAS con notificaciones ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -1140,19 +1139,30 @@ async function renderAdminVentas(cont) {
     if (errP) throw errP;
     G.ventasAll = ventas || [];
     G.pedidosAll = pedidos || [];
-    console.log(`Ventas: ${G.ventasAll.length}, Pedidos: ${G.pedidosAll.length}`);
   } catch(e) {
     cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${e.message}</div>`;
     return;
   }
-
+  const lastCheck = lsGet('adminLastCheck');
+  const newOrders = G.pedidosAll.filter(p => 
+    p.status === 'Pendiente' && 
+    (!lastCheck || new Date(p.fecha) > new Date(lastCheck))
+  );
+  const newOrdersCount = newOrders.length;
   const totalVentasPagadas = G.ventasAll.filter(v => v.status === 'Pagado').reduce((s,v) => s + v.total, 0);
   const totalPedidosPagados = G.pedidosAll.filter(p => p.status === 'Pagado').reduce((s,p) => s + p.total, 0);
   const total = totalVentasPagadas + totalPedidosPagados;
   const pct = Math.min(100, (total / G.META) * 100);
   const falta = Math.max(0, G.META - total);
-
-  cont.innerHTML = `
+  let notifHtml = '';
+  if (newOrdersCount > 0) {
+    notifHtml = `
+      <div class="card new-orders-card" id="newOrdersNotification">
+        <div class="card-title">🔔 Nuevos pedidos <span style="background:var(--c-red); color:white; border-radius:20px; padding:0 8px;">${newOrdersCount}</span></div>
+        <p>Haz clic para ver los pedidos recientes pendientes.</p>
+      </div>`;
+  }
+  cont.innerHTML = notifHtml + `
     <div class="meta-hero">
       <div class="meta-label">Meta de ganancias</div>
       <div class="meta-goal">${pesos(G.META)}</div>
@@ -1194,10 +1204,42 @@ async function renderAdminVentas(cont) {
     <div class="card"><div class="card-title">📈 Pedidos app por día</div><canvas id="chartPed" height="100"></canvas></div>`;
 
   requestAnimationFrame(() => {
+    const notifCard = document.getElementById('newOrdersNotification');
+    if (notifCard) {
+      notifCard.onclick = async () => {
+        const ordersWithUser = [];
+        for (const order of newOrders) {
+          const { data: usuario } = await supabase.from('usuarios').select('nombre, telefono, whatsapp, direccion').eq('user_id', order.user_id).single();
+          ordersWithUser.push({ ...order, usuario });
+        }
+        const modal = document.getElementById('newOrdersModal');
+        const listContainer = document.getElementById('newOrdersList');
+        listContainer.innerHTML = ordersWithUser.map(o => `
+          <div class="order-card" style="margin-bottom:1rem;">
+            <div class="order-meta">
+              <span class="order-num">${o.invoice_number}</span>
+              <span class="order-date">${fmtDate(o.fecha)}</span>
+              <span class="order-total">${pesos(o.total)}</span>
+            </div>
+            <div class="order-contact-info">
+              <div><strong>Cliente:</strong> ${o.usuario?.nombre || 'N/A'}</div>
+              <div><strong>Teléfono:</strong> ${o.usuario?.telefono || 'No registrado'}</div>
+              <div><strong>WhatsApp:</strong> ${o.usuario?.whatsapp || (o.usuario?.telefono || 'No registrado')}</div>
+              <div><strong>Dirección:</strong> ${o.usuario?.direccion || 'No especificada'}</div>
+              ${o.nota ? `<div><strong>Nota:</strong> ${o.nota}</div>` : ''}
+            </div>
+            <div style="margin-top:8px">
+              <button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${o.id}')">Marcar Pagado</button>
+              <button class="btn btn-danger btn-sm" onclick="cancelarPedido('${o.id}')">Cancelar</button>
+            </div>
+          </div>
+        `).join('');
+        modal.classList.remove('hidden');
+      };
+    }
     const vCant = $('vCant');
     const vTipoSelect = $('vTipoSelect');
     if (!vCant || !vTipoSelect) return;
-
     const updatePreview = () => {
       const cant = parseInt(vCant.value) || 0;
       let tipoForzado = vTipoSelect.value;
@@ -1218,7 +1260,6 @@ async function renderAdminVentas(cont) {
     vCant.addEventListener('input', updatePreview);
     vTipoSelect.addEventListener('change', updatePreview);
     updatePreview();
-
     $('btnRegistrarVenta').onclick = async () => {
       const cant = parseInt(vCant.value);
       if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
@@ -1244,7 +1285,6 @@ async function renderAdminVentas(cont) {
         await renderAdminTab('inventario');
       } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
     };
-
     const lista = $('ultimosPedidosList');
     if (lista) {
       if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
@@ -1273,7 +1313,6 @@ async function renderAdminVentas(cont) {
         `}).join('');
       }
     }
-
     $('exportPedidosBtn').onclick = () => {
       let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
       G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
@@ -1284,12 +1323,10 @@ async function renderAdminVentas(cont) {
       G.ventasAll.forEach(v => csv += `"${v.invoice_number || 'N/A'}","${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
     };
-
     renderChartDir();
     renderChartPed();
   });
 }
-
 window.marcarEntregado = async (id) => {
   await dbUpdatePedido(id, { status: 'Entregado' });
   await renderAdminTab('ventas');
@@ -1336,7 +1373,6 @@ window.cancelarVenta = async (id) => {
     await renderAdminTab('pedidos');
   }
 };
-
 function renderChartDir() {
   const canvas = $('chartDir');
   if (!canvas) return;
@@ -1375,34 +1411,19 @@ async function renderAdminPedidos(cont) {
     let items = [];
     pedidos.forEach(p => {
       items.push({
-        id: p.id,
-        tipo: 'pedido',
-        invoice: p.invoice_number,
-        fecha: p.fecha,
-        total: p.total,
-        status: p.status,
-        detalle: `${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${p.payment_method || 'N/E'}`,
-        nota: p.nota,
-        user_id: p.user_id,
-        cantidad_total: (p.items||[]).reduce((s,i)=>s+i.cant,0)
+        id: p.id, tipo: 'pedido', invoice: p.invoice_number, fecha: p.fecha, total: p.total,
+        status: p.status, detalle: `${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${p.payment_method || 'N/E'}`,
+        nota: p.nota, user_id: p.user_id, cantidad_total: (p.items||[]).reduce((s,i)=>s+i.cant,0)
       });
     });
     ventas.forEach(v => {
       items.push({
-        id: v.id,
-        tipo: 'venta_directa',
-        invoice: v.invoice_number || 'Sin factura',
-        fecha: v.fecha,
-        total: v.total,
-        status: v.status || 'Pendiente',
-        detalle: `${v.cant} cubetas · ${v.tipo_nombre || 'Venta directa'}`,
-        nota: v.nota || '',
-        user_id: v.user_id,
-        cantidad_total: v.cant
+        id: v.id, tipo: 'venta_directa', invoice: v.invoice_number || 'Sin factura', fecha: v.fecha, total: v.total,
+        status: v.status || 'Pendiente', detalle: `${v.cant} cubetas · ${v.tipo_nombre || 'Venta directa'}`,
+        nota: v.nota || '', user_id: v.user_id, cantidad_total: v.cant
       });
     });
     items.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-
     let html = `<div class="card"><div class="card-title">📦 Todas las transacciones (pedidos + ventas directas)</div>
       <div class="filter-bar" id="pedFilterBarAdmin">
         <button class="chip active" data-status="todos">Todos</button>
@@ -1414,7 +1435,6 @@ async function renderAdminPedidos(cont) {
     </div>
     <div class="card"><div class="card-title">📊 Transacciones por día (pagadas)</div><canvas id="transChart" height="100"></canvas></div>`;
     cont.innerHTML = html;
-
     const renderList = (status) => {
       const list = status === 'todos' ? items : items.filter(i => i.status === status);
       const container = $('adminPedidosList');
@@ -1447,7 +1467,6 @@ async function renderAdminPedidos(cont) {
         </div>
       `}).join('');
     };
-
     const chips = cont.querySelectorAll('[data-status]');
     chips.forEach(chip => {
       chip.onclick = () => {
@@ -1457,7 +1476,6 @@ async function renderAdminPedidos(cont) {
       };
     });
     renderList('todos');
-
     const pagadas = items.filter(i => i.status === 'Pagado');
     const mapa = new Map();
     pagadas.forEach(i => { const d = fmtDateShort(i.fecha); mapa.set(d, (mapa.get(d) || 0) + i.total); });
@@ -1473,7 +1491,7 @@ async function renderAdminPedidos(cont) {
     } else {
       ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
     }
-
+    // Factura en admin con datos de cliente
     window.verFactura = async (tipo, id) => {
       let transaccion;
       if (tipo === 'pedido') transaccion = G.pedidosAll.find(p => p.id == id);
@@ -1484,10 +1502,14 @@ async function renderAdminPedidos(cont) {
       else if (transaccion.status === 'Pagado') badgeEstado = 'badge-pagado';
       else if (transaccion.status === 'Cancelado') badgeEstado = 'badge-canceled';
       let itemsHtml = '';
+      let clienteHtml = '';
       if (tipo === 'pedido') {
-        itemsHtml = (transaccion.items || []).map(i => `<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('');
+        itemsHtml = (transaccion.items || []).map(i => `<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('');
+        const { data: usuario } = await supabase.from('usuarios').select('nombre, telefono, whatsapp, direccion').eq('user_id', transaccion.user_id).single();
+        clienteHtml = `<p><strong>${usuario?.nombre || 'N/A'}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p>`;
       } else {
-        itemsHtml = `<tr><td>Cubeta 24 huevos (Venta directa)</td><td>${transaccion.cant}</td><td>${pesos(transaccion.precio_unitario)}</td><td>${pesos(transaccion.total)}</td></tr>`;
+        itemsHtml = `<tr><td>Cubeta 24 huevos (Venta directa)</td><td>${transaccion.cant}</td><td>${pesos(transaccion.precio_unitario)}</td><td>${pesos(transaccion.total)}</td>`);
+        clienteHtml = `<p>Venta directa registrada por administrador</p>`;
       }
       $('invoiceContent').innerHTML = `
         <div class="invoice">
@@ -1495,7 +1517,9 @@ async function renderAdminPedidos(cont) {
             <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div>
             <div class="invoice-num">${transaccion.invoice_number || 'Sin factura'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
           </div>
-          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
+          <div class="invoice-section"><h4>Cliente</h4>${clienteHtml}</div>
+          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th><tr></thead><tbody>${itemsHtml}</tbody></table></div>
+          ${transaccion.nota ? `<p class="invoice-note">Nota: ${transaccion.nota}</p>` : ''}
           <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
           <div class="invoice-footer">IVA exento — Art. 424 E.T.</div>
         </div>`;
@@ -1532,7 +1556,6 @@ async function renderAdminInventario(cont) {
         <div class="card-title">📜 Historial de movimientos (últimos 50)</div>
         ${movimientosHtml}
       </div>`;
-    
     requestAnimationFrame(() => {
       const btnAjustar = document.getElementById('btnAjustarStock');
       const btnRefrescar = document.getElementById('btnRefrescarStock');
@@ -1589,7 +1612,7 @@ async function renderAdminUsuarios(cont) {
         </tr>
       `;
     });
-    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
+    cont.innerHTML = html + `</tbody><table></div><div id="usersAdminMsg"></div></div>`;
     window.adminGuardarUsuario = async (uid) => {
       const nombre = $(`un_${uid}`).value.trim();
       const tipo = $(`ut_${uid}`).value;
@@ -1709,7 +1732,6 @@ function renderAdminRespaldo(cont) {
     updateAuthLogo();
     renderAdminRespaldo(cont);
   };
-
   $('#fixMissingInvoicesBtn').onclick = async () => {
     const { data: sinFactura, error } = await supabase.from('ventas_directas').select('*').is('invoice_number', null);
     if (error) { alert('Error: ' + error.message); return; }
@@ -1765,7 +1787,7 @@ async function renderAdminAdmins(cont) {
           </tr>
         `;
       });
-      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      html += `</tbody></td></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
     }
     cont.innerHTML = html;
     const addBtn = $('addAdminBtn');
@@ -1824,7 +1846,6 @@ async function renderAdminAdmins(cont) {
     G.email = profile.email || session.user.email || '';
     G.documento = profile.documento || '';
     G.direccion = profile.direccion || '';
-    console.log('Perfil cargado:', G);
     G.stockActual = await getStock();
   } catch(e) {
     await window.supabase.auth.signOut();
