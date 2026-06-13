@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+/* ========== ESTILOS COMPLETOS ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -1074,7 +1075,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p><strong>${usuario?.nombre || G.nombre}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<table><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody><table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -1539,7 +1540,7 @@ async function renderAdminInventario(cont) {
     if (error) throw error;
     let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
     (movimientos || []).forEach(m => {
-      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
+      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}<td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
     });
     movimientosHtml += `</tbody></table></div>`;
     cont.innerHTML = `
@@ -1612,7 +1613,7 @@ async function renderAdminUsuarios(cont) {
         </tr>
       `;
     });
-    cont.innerHTML = html + `</tbody><table></div><div id="usersAdminMsg"></div></div>`;
+    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
     window.adminGuardarUsuario = async (uid) => {
       const nombre = $(`un_${uid}`).value.trim();
       const tipo = $(`ut_${uid}`).value;
@@ -1787,7 +1788,7 @@ async function renderAdminAdmins(cont) {
           </tr>
         `;
       });
-      html += `</tbody></td></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
     }
     cont.innerHTML = html;
     const addBtn = $('addAdminBtn');
