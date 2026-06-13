@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ====================== ROOT (sin cambios, igual que antes) ====================== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -26,6 +25,7 @@
   --c-brown3:   #a06c3a;
   --c-green:    #3b6b3b;
   --c-red:      #9b2a1a;
+  --c-blue:     #2c7da0;
   --c-muted:    #8a6840;
   --c-border:   #d9c49a;
   --c-shadow:   rgba(74,44,14,0.12);
@@ -85,6 +85,8 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .btn-success:hover:not(:disabled) { background: #2d5430; transform: translateY(-1px); }
 .btn-danger { background: var(--c-red); color: white; }
 .btn-danger:hover:not(:disabled) { background: #7a1f10; }
+.btn-info { background: var(--c-blue); color: white; }
+.btn-info:hover:not(:disabled) { background: #1f5e7a; }
 .btn-ghost { background: var(--c-pale); color: var(--c-brown2); }
 .btn-ghost:hover:not(:disabled) { background: var(--c-border); }
 .btn-outline { background: transparent; border: 1.5px solid var(--c-amber); color: var(--c-amber); }
@@ -153,7 +155,9 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 .badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.6rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 700; }
 .badge-pending   { background: #fef3e0; color: var(--c-amber); border: 1px solid var(--c-pale); }
-.badge-delivered { background: #edf7ed; color: var(--c-green); border: 1px solid #b7dbb7; }
+.badge-delivered { background: #e0f0e8; color: var(--c-green); border: 1px solid #b7dbb7; }
+.badge-pagado    { background: #d4e7f0; color: var(--c-blue); border: 1px solid #9bc0d0; }
+.badge-canceled  { background: #f1e0dd; color: var(--c-red); border: 1px solid #f5c6c1; }
 .badge-admin     { background: #e8e0ff; color: #4a2b7a; border: 1px solid #c5b8ee; }
 
 .meta-hero { background: linear-gradient(145deg, #1c0f05, #3a1e06, #5a2e0a); border-radius: var(--r); padding: 2rem; color: white; margin-bottom: 1.25rem; position: relative; overflow: hidden; }
@@ -218,6 +222,9 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 .sug-card { background: var(--c-cream); border: 1.5px solid var(--c-border); border-radius: var(--r-sm); padding: 0.85rem 1rem; margin-bottom: 0.65rem; }
 .sug-meta { font-size: 0.8rem; color: var(--c-muted); margin-top: 0.35rem; }
+
+.notification-banner { background: #fff3cd; border-left: 6px solid #ffc107; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: var(--r-sm); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: #856404; }
+.notification-banner i { font-size: 1.4rem; }
 
 @media(max-width:768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -391,8 +398,6 @@ let G = {
   pedidosAll: [], ventasAll: [], usersAll: [],
   chartDir: null, chartPed: null,
   META: 2000000,
-  FIGURAS: ['🥚','🌾','☀️','🌻','🏔️','💛','🪺','⭐','🌿','🏆'],
-  figIdx: 0, figTimer: null,
   logoUrl: null,
 };
 
@@ -578,16 +583,6 @@ function renderFooter(id) {
   $(`wa_${id}`).onclick = () => window.open('https://wa.me/573054126770', '_blank');
   $(`sup_${id}`).onclick = () => $('supportModal').classList.remove('hidden');
   $(`sug_${id}`).onclick = () => $('suggestionModal').classList.remove('hidden');
-}
-
-function filterByPeriod(list, period, dateKey='fecha') {
-  if (period === 'todo') return list;
-  const now = Date.now(); let cutoff;
-  if (period === '7d') cutoff = now - 7*86400000;
-  else if (period === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); cutoff = d.getTime(); }
-  else if (period === 'anio') cutoff = new Date(new Date().getFullYear(),0,1).getTime();
-  else cutoff = 0;
-  return list.filter(x => new Date(x[dateKey]).getTime() >= cutoff);
 }
 
 // =================================================================
@@ -837,14 +832,25 @@ async function loadClientOrders() {
     const pedidos = await dbPedidosUser(G.userId);
     if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem"><span class="egg-empty">📋</span>Aún no tienes pedidos</div>'; return; }
     const ahora = new Date();
-    cont.innerHTML = pedidos.map(p => {
+    // Notificación si hay pedidos con estado "Entregado"
+    const hayEntregados = pedidos.some(p => p.status === 'Entregado');
+    let notifHtml = '';
+    if (hayEntregados) {
+      notifHtml = `<div class="notification-banner"><i class="fas fa-truck"></i> <span>⚠️ Tienes pedidos entregados pendientes de pago. Por favor, realiza el pago lo antes posible.</span></div>`;
+    }
+    cont.innerHTML = notifHtml + pedidos.map(p => {
       const fechaPedido = new Date(p.fecha);
       const diffMin = (ahora - fechaPedido) / (1000 * 60);
       const puedeCancelar = (p.status === 'Pendiente' && diffMin <= 30);
+      let badgeClass = '', badgeText = p.status;
+      if (p.status === 'Pendiente') { badgeClass = 'badge-pending'; badgeText = 'Pendiente'; }
+      else if (p.status === 'Entregado') { badgeClass = 'badge-delivered'; badgeText = 'Entregado - Pago pendiente'; }
+      else if (p.status === 'Pagado') { badgeClass = 'badge-pagado'; badgeText = 'Pagado'; }
+      else if (p.status === 'Cancelado') { badgeClass = 'badge-canceled'; badgeText = 'Cancelado'; }
       return `
-      <div class="order-card ${p.status==='Entregado'?'delivered':''}">
+      <div class="order-card">
         <div class="order-meta">
-          <div><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}" style="margin-left:.5rem">${p.status}</span></div>
+          <div><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${badgeClass}" style="margin-left:.5rem">${badgeText}</span></div>
           <span class="order-date">${fmtDate(p.fecha)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;flex-wrap:wrap;gap:.35rem">
@@ -871,14 +877,19 @@ window.showClientInvoice = async (pedidoId) => {
   const pedidos = await dbPedidosUser(G.userId);
   const p = pedidos.find(x => x.id === pedidoId);
   if (!p) return;
+  let badgeEstado = '';
+  if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
+  else if (p.status === 'Entregado') badgeEstado = 'badge-delivered';
+  else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
+  else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
   $('invoiceContent').innerHTML = `
     <div style="font-family:var(--fb)">
       <div class="invoice-header">
         <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7 · Venta huevos de codorniz</div></div>
-        <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
+        <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td>}<td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -954,8 +965,9 @@ async function renderAdminVentas(cont) {
   }
 
   const totalVentas = G.ventasAll.reduce((s,v) => s + v.total, 0);
-  const totalPedidos = G.pedidosAll.reduce((s,p) => s + p.total, 0);
-  const total = totalVentas + totalPedidos;
+  // SOLO PEDIDOS CON ESTADO "Pagado" suman a la meta
+  const totalPedidosPagados = G.pedidosAll.filter(p => p.status === 'Pagado').reduce((s,p) => s + p.total, 0);
+  const total = totalVentas + totalPedidosPagados;
   const pct = Math.min(100, (total / G.META) * 100);
   const falta = Math.max(0, G.META - total);
 
@@ -971,7 +983,7 @@ async function renderAdminVentas(cont) {
     </div>
     <div class="grid-4" style="margin-bottom:1.25rem">
       <div class="stat-card"><div class="stat-val">${pesos(totalVentas)}</div><div class="stat-label">Ventas directas</div></div>
-      <div class="stat-card"><div class="stat-val">${pesos(totalPedidos)}</div><div class="stat-label">Pedidos app</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalPedidosPagados)}</div><div class="stat-label">Pedidos app (Pagados)</div></div>
       <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Transacciones</div></div>
       <div class="stat-card"><div class="stat-val">${Math.floor(pct)}%</div><div class="stat-label">% de meta</div></div>
     </div>
@@ -1053,21 +1065,28 @@ async function renderAdminVentas(cont) {
     if (lista) {
       if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
       else {
-        lista.innerHTML = G.pedidosAll.slice(0,10).map(p => `
+        lista.innerHTML = G.pedidosAll.slice(0,10).map(p => {
+          let badgeEstado = '';
+          if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
+          else if (p.status === 'Entregado') badgeEstado = 'badge-delivered';
+          else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
+          else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
+          return `
           <div class="order-card">
             <div class="order-meta">
               <span class="order-num">${p.invoice_number}</span>
-              <span class="badge ${p.status==='Entregado'?'badge-delivered':(p.status==='Cancelado'?'badge-pending':'badge-pending')}">${p.status}</span>
+              <span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span>
               <span class="order-total">${pesos(p.total)}</span>
             </div>
             <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
             <div class="order-note">${p.nota ? `📝 ${p.nota}` : ''}</div>
             <div style="margin-top:8px">
-              ${p.status === 'Pendiente' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Entregado</button>` : ''}
-              ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarPedidoDesdeVentas('${p.id}')">Cancelar</button>` : ''}
+              ${p.status === 'Pendiente' ? `<button class="btn btn-info btn-sm" onclick="adminMarcarEntregado('${p.id}')">Marcar Entregado</button>` : ''}
+              ${(p.status === 'Pendiente' || p.status === 'Entregado') ? `<button class="btn btn-success btn-sm" onclick="adminMarcarPagado('${p.id}')">Marcar Pagado</button>` : ''}
+              ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelarPedido('${p.id}')">Cancelar</button>` : ''}
             </div>
           </div>
-        `).join('');
+        `}).join('');
       }
     }
 
@@ -1087,14 +1106,22 @@ async function renderAdminVentas(cont) {
   });
 }
 
-window.marcarEntregadoDesdeVentas = async (id) => {
+// Funciones para cambiar estados (admin)
+window.adminMarcarEntregado = async (id) => {
   await dbUpdatePedido(id, { status: 'Entregado' });
   await renderAdminTab('ventas');
+  await renderAdminTab('pedidos');
 };
-window.cancelarPedidoDesdeVentas = async (id) => {
+window.adminMarcarPagado = async (id) => {
+  await dbUpdatePedido(id, { status: 'Pagado' });
+  await renderAdminTab('ventas');
+  await renderAdminTab('pedidos');
+};
+window.adminCancelarPedido = async (id) => {
   if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
     await dbUpdatePedido(id, { status: 'Cancelado' });
     await renderAdminTab('ventas');
+    await renderAdminTab('pedidos');
   }
 };
 
@@ -1143,6 +1170,7 @@ async function renderAdminPedidos(cont) {
         <button class="chip active" data-status="todos">Todos</button>
         <button class="chip" data-status="Pendiente">Pendientes</button>
         <button class="chip" data-status="Entregado">Entregados</button>
+        <button class="chip" data-status="Pagado">Pagados</button>
         <button class="chip" data-status="Cancelado">Cancelados</button>
       </div>
       <div id="adminPedidosList"></div>
@@ -1154,21 +1182,28 @@ async function renderAdminPedidos(cont) {
       const container = $('adminPedidosList');
       if (!container) return;
       if (!list.length) { container.innerHTML = '<div class="cart-empty">Sin pedidos</div>'; return; }
-      container.innerHTML = list.map(p => `
+      container.innerHTML = list.map(p => {
+        let badgeEstado = '';
+        if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
+        else if (p.status === 'Entregado') badgeEstado = 'badge-delivered';
+        else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
+        else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
+        return `
         <div class="order-card">
           <div class="order-meta">
-            <div><span class="order-num">${p.invoice_number}</span> <span class="badge ${p.status==='Entregado'?'badge-delivered':(p.status==='Cancelado'?'badge-pending':'badge-pending')}">${p.status}</span></div>
+            <div><span class="order-num">${p.invoice_number}</span> <span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div>
             <span class="order-date">${fmtDate(p.fecha)}</span>
           </div>
           <div>${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${pesos(p.total)}</div>
           ${p.nota ? `<div class="muted">📝 ${p.nota}</div>` : ''}
           <div style="margin-top:8px">
-            ${p.status === 'Pendiente' ? `<button class="btn btn-success btn-sm" onclick="adminMarcarEntregado('${p.id}')">Entregado</button>` : ''}
+            ${p.status === 'Pendiente' ? `<button class="btn btn-info btn-sm" onclick="adminMarcarEntregado('${p.id}')">Marcar Entregado</button>` : ''}
+            ${(p.status === 'Pendiente' || p.status === 'Entregado') ? `<button class="btn btn-success btn-sm" onclick="adminMarcarPagado('${p.id}')">Marcar Pagado</button>` : ''}
             ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelarPedido('${p.id}')">Cancelar</button>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="adminVerFactura('${p.id}')">Factura</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     };
 
     const chips = cont.querySelectorAll('[data-status]');
@@ -1181,20 +1216,15 @@ async function renderAdminPedidos(cont) {
     });
     renderList('todos');
 
-    window.adminMarcarEntregado = async (id) => {
-      await dbUpdatePedido(id, { status: 'Entregado' });
-      await renderAdminTab('pedidos');
-    };
-    window.adminCancelarPedido = async (id) => {
-      if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
-        await dbUpdatePedido(id, { status: 'Cancelado' });
-        await renderAdminTab('pedidos');
-      }
-    };
     window.adminVerFactura = (id) => {
       const p = G.pedidosAll.find(x => x.id == id);
       if (!p) return;
-      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td>}<td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
+      let badgeEstado = '';
+      if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
+      else if (p.status === 'Entregado') badgeEstado = 'badge-delivered';
+      else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
+      else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
+      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
       $('invoiceModal').classList.remove('hidden');
     };
   } catch(e) {
