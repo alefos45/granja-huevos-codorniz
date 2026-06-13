@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- SQL (sin cambios, igual que antes) -->
 <style>
 /* ====================== ROOT ====================== */
 :root {
@@ -397,7 +398,7 @@ let G = {
 };
 
 // =================================================================
-//  PRECIOS
+//  PRECIOS (sin cambios)
 // =================================================================
 function calcPrecio(tipo, cant) {
   cant = Number(cant);
@@ -432,7 +433,7 @@ function calcPromoText(tipo) {
 }
 
 // =================================================================
-//  SUPABASE HELPERS
+//  SUPABASE HELPERS (sin cambios)
 // =================================================================
 async function dbLogin(email, pass) {
   const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
@@ -440,24 +441,26 @@ async function dbLogin(email, pass) {
   return data.user;
 }
 async function dbRegister(email, pass, ud) {
-  // 🔥 REGISTRO COMPLETO: todos los campos se envían en metadata
   const { data, error } = await window.supabase.auth.signUp({
-    email,
-    password: pass,
-    options: {
-      data: {
-        nombre: ud.nombre,
-        documento: ud.documento,
-        telefono: ud.telefono,
-        whatsapp: ud.whatsapp,
-        direccion: ud.direccion,
-        tipo: ud.tipo
-      }
-    }
+    email, password: pass,
+    options: { data: { nombre: ud.nombre } }
   });
   if (error) throw error;
   if (!data.user) throw new Error('No se pudo crear el usuario. Verifica el correo.');
-  // No se necesita setTimeout ni update adicional. El trigger hará todo.
+  await new Promise(r => setTimeout(r, 900));
+  const { error: updateErr } = await window.supabase.from('usuarios').update({
+    nombre: ud.nombre, documento: ud.documento,
+    direccion: ud.direccion, telefono: ud.telefono,
+    whatsapp: ud.whatsapp, tipo: ud.tipo,
+  }).eq('user_id', data.user.id);
+  if (updateErr) {
+    const { error: insertErr } = await window.supabase.from('usuarios').insert({
+      user_id: data.user.id, nombre: ud.nombre, documento: ud.documento,
+      email, direccion: ud.direccion, telefono: ud.telefono,
+      whatsapp: ud.whatsapp, tipo: ud.tipo, es_admin: false,
+    });
+    if (insertErr) throw new Error('Error al guardar perfil: ' + insertErr.message);
+  }
   return data.user;
 }
 async function dbProfile(uid) {
@@ -524,7 +527,7 @@ async function dbCreateSugg(s) {
 }
 
 // =================================================================
-//  UTILS
+//  UTILS (sin cambios)
 // =================================================================
 function pesos(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function fmtDate(d) {
@@ -589,7 +592,7 @@ function filterByPeriod(list, period, dateKey='fecha') {
 }
 
 // =================================================================
-//  MODALES GLOBALES
+//  MODALES GLOBALES (sin cambios)
 // =================================================================
 function initModals() {
   $('closeSupportBtn').onclick = () => $('supportModal').classList.add('hidden');
@@ -632,7 +635,7 @@ function initModals() {
 }
 
 // =================================================================
-//  AUTH PAGE
+//  AUTH PAGE (sin cambios)
 // =================================================================
 function initAuthPage() {
   const tL = $('tabLoginBtn'), tR = $('tabRegisterBtn'), pL = $('loginPanel'), pR = $('registerPanel');
@@ -678,7 +681,7 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE
+//  CLIENT PAGE (sin cambios, funciona)
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -861,7 +864,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></td></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -870,10 +873,10 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (VERSIÓN CORREGIDA Y ROBUSTA)
+//  ADMIN PAGE (CORREGIDA Y SIMPLIFICADA)
 // =================================================================
 async function initAdminPage() {
-  console.log('initAdminPage - usuario:', G.nombre, 'esAdmin:', G.esAdmin);
+  console.log('initAdminPage, esAdmin:', G.esAdmin);
   $('adminWelcome').textContent = G.nombre;
   $('adminLogout').onclick = () => { window.supabase.auth.signOut().then(() => location.reload()); };
   $('adminTopLogo').onclick = () => $('logoFileInput').click();
@@ -901,7 +904,6 @@ async function initAdminPage() {
       main.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       $(`atab-${btn.dataset.atab}`).classList.add('active');
-      console.log('Cargando tab:', btn.dataset.atab);
       await renderAdminTab(btn.dataset.atab);
     };
   });
@@ -920,166 +922,158 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS (CORREGIDA) ==========
+// ========== VENTAS (simplificada y funcional) ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
-  cont.innerHTML = '<div class="loader"></div>';
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
-    G.ventasAll = await dbAllVentas();
-    G.pedidosAll = await dbAllPedidos();
-    console.log('Ventas cargadas:', G.ventasAll.length, 'Pedidos cargados:', G.pedidosAll.length);
+    const { data: ventas, error: errV } = await supabase.from('ventas_directas').select('*').order('fecha', { ascending: false });
+    const { data: pedidos, error: errP } = await supabase.from('pedidos').select('*').order('fecha', { ascending: false });
+    if (errV) throw errV;
+    if (errP) throw errP;
+    G.ventasAll = ventas || [];
+    G.pedidosAll = pedidos || [];
+    console.log(`Ventas: ${G.ventasAll.length}, Pedidos: ${G.pedidosAll.length}`);
   } catch(e) {
-    console.error('Error cargando datos:', e);
-    cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${escHtml(e.message)}</div>`;
+    cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${e.message}</div>`;
     return;
   }
 
-  const tDir = G.ventasAll.reduce((s,v) => s + v.total, 0);
-  const tPed = G.pedidosAll.reduce((s,p) => s + p.total, 0);
-  const tNet = tDir + tPed;
-  const pct = Math.min(100, (tNet / G.META) * 100);
-  const falta = Math.max(0, G.META - tNet);
+  const totalVentas = G.ventasAll.reduce((s,v) => s + v.total, 0);
+  const totalPedidos = G.pedidosAll.reduce((s,p) => s + p.total, 0);
+  const total = totalVentas + totalPedidos;
+  const pct = Math.min(100, (total / G.META) * 100);
+  const falta = Math.max(0, G.META - total);
 
   cont.innerHTML = `
     <div class="meta-hero">
       <div class="meta-label">Meta de ganancias</div>
       <div class="meta-goal">${pesos(G.META)}</div>
-      <div class="meta-progress"><div class="meta-fill" id="metaFill"></div></div>
+      <div class="meta-progress"><div class="meta-fill" style="width:${pct}%"></div></div>
       <div class="meta-row">
-        <div>
-          <div class="meta-pct" id="metaPct">0%</div>
-          <div style="font-size:.8rem;opacity:.7">Acumulado: ${pesos(tNet)}</div>
-          <div style="font-size:.75rem;opacity:.6">Faltante: ${pesos(falta)}</div>
-        </div>
-        <div class="meta-figure" id="metaFig">🥚</div>
+        <div><div class="meta-pct">${Math.floor(pct)}%</div><div>Acumulado: ${pesos(total)}</div><div>Faltante: ${pesos(falta)}</div></div>
+        <div class="meta-figure">🥚</div>
       </div>
     </div>
     <div class="grid-4" style="margin-bottom:1.25rem">
-      <div class="stat-card"><div class="stat-val">${pesos(tDir)}</div><div class="stat-label">Ventas directas</div></div>
-      <div class="stat-card"><div class="stat-val">${pesos(tPed)}</div><div class="stat-label">Pedidos app</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalVentas)}</div><div class="stat-label">Ventas directas</div></div>
+      <div class="stat-card"><div class="stat-val">${pesos(totalPedidos)}</div><div class="stat-label">Pedidos app</div></div>
       <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Transacciones</div></div>
       <div class="stat-card"><div class="stat-val">${Math.floor(pct)}%</div><div class="stat-label">% de meta</div></div>
     </div>
     <div class="grid-2">
       <div class="card">
         <div class="card-title">➕ Registrar venta directa</div>
-        <div class="fg"><label>Cantidad de cubetas</label><input type="number" id="aVentaCant" min="1" max="500" value="1"></div>
+        <div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="vCant" min="1" max="500" value="1"></div>
         <div class="price-display">
-          <div class="price-big" id="aVentaPrecio">$4.900</div>
-          <div class="price-label" id="aVentaTipoAuto">Tipo automático: estándar</div>
+          <div class="price-big" id="vPrecioPreview">$4.900</div>
+          <div class="price-label" id="vTipoPreview">Tipo automático</div>
         </div>
         <div class="fg"><label>Forzar tipo (opcional)</label>
-          <select id="aVentaForzarTipo"><option value="">Automático (según cantidad)</option><option value="bodega">Bodega</option><option value="restaurante">Restaurante</option><option value="comida_rapida">Comida rápida</option><option value="comun">Común $4.900</option></select>
+          <select id="vTipoSelect"><option value="">Automático</option><option value="bodega">Bodega</option><option value="restaurante">Restaurante</option><option value="comida_rapida">Comida rápida</option></select>
         </div>
-        <div class="total-bar" style="margin-top:.5rem"><span>Total</span><span class="total-num" id="aVentaTotal">$4.900</span></div>
-        <button class="btn btn-primary btn-block" id="aVentaBtn"><i class="fas fa-plus"></i> Registrar venta</button>
-        <div id="aVentaMsg" style="margin-top:.5rem"></div>
+        <div class="total-bar">Total: <span id="vTotalPreview">$4.900</span></div>
+        <button class="btn btn-primary btn-block" id="btnRegistrarVenta">Registrar venta</button>
+        <div id="vMsg"></div>
       </div>
       <div class="card">
-        <div class="card-title">📈 Pedidos app <small><select id="periodoFilter" style="font-size:.8rem;padding:.2rem .4rem;"><option value="7d">7 días</option><option value="mes">Este mes</option><option value="anio">Este año</option><option value="todo">Todo</option></select></small></div>
-        <div style="margin-bottom:.75rem"><canvas id="chartPed" height="130"></canvas></div>
-        <div id="ultimosPedidos"></div>
-        <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" id="exportCsvBtn"><i class="fas fa-file-csv"></i> CSV pedidos</button><button class="btn btn-ghost btn-sm" id="exportVentasCsvBtn"><i class="fas fa-file-csv"></i> CSV ventas</button></div>
+        <div class="card-title">📈 Últimos pedidos</div>
+        <div id="ultimosPedidosList"></div>
+        <button class="btn btn-ghost btn-sm" id="exportPedidosBtn">CSV pedidos</button>
+        <button class="btn btn-ghost btn-sm" id="exportVentasBtn">CSV ventas</button>
       </div>
     </div>
     <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>`;
 
-  // Actualizar meta
-  const metaFill = $('#metaFill');
-  if (metaFill) metaFill.style.width = pct + '%';
-  const metaPct = $('#metaPct');
-  if (metaPct) metaPct.textContent = Math.floor(pct) + '%';
-
-  // Animación figura
-  if (G.figTimer) clearInterval(G.figTimer);
-  G.figIdx = 0;
-  G.figTimer = setInterval(() => {
-    const el = $('#metaFig');
-    if (el) {
-      G.figIdx = (G.figIdx + 1) % G.FIGURAS.length;
-      el.textContent = G.FIGURAS[G.figIdx];
-    } else clearInterval(G.figTimer);
-  }, 4000);
-
-  // Actualizar vista previa venta directa
-  function updateVentaPreview() {
-    const aVentaCant = $('#aVentaCant');
-    const aVentaForzarTipo = $('#aVentaForzarTipo');
-    if (!aVentaCant || !aVentaForzarTipo) return;
-    let cant = parseInt(aVentaCant.value) || 0;
-    let tipoForzado = aVentaForzarTipo.value;
+  // Actualizar preview precio
+  const updatePreview = () => {
+    const cant = parseInt($('#vCant').value) || 0;
+    let tipoForzado = $('#vTipoSelect').value;
     let precio = 0, tipoTexto = '';
     if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
     else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
     else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoTexto = 'Comida rápida (forzado)'; }
-    else if (tipoForzado === 'comun') { precio = 4900; tipoTexto = 'Común (forzado)'; }
     else {
       if (cant >= 50) { precio = 4300; tipoTexto = 'Mayorista (≥50)'; }
       else if (cant >= 20) { precio = 4500; tipoTexto = 'Bodega (20-49)'; }
       else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
       else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
     }
-    const aVentaPrecio = $('#aVentaPrecio');
-    const aVentaTipoAuto = $('#aVentaTipoAuto');
-    const aVentaTotal = $('#aVentaTotal');
-    if (aVentaPrecio) aVentaPrecio.textContent = pesos(precio);
-    if (aVentaTipoAuto) aVentaTipoAuto.textContent = tipoTexto;
-    if (aVentaTotal) aVentaTotal.textContent = pesos(cant * precio);
+    $('#vPrecioPreview').textContent = pesos(precio);
+    $('#vTipoPreview').textContent = tipoTexto;
+    $('#vTotalPreview').textContent = pesos(cant * precio);
+  };
+  $('#vCant').oninput = updatePreview;
+  $('#vTipoSelect').onchange = updatePreview;
+  updatePreview();
+
+  // Registrar venta
+  $('#btnRegistrarVenta').onclick = async () => {
+    const cant = parseInt($('#vCant').value);
+    if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
+    let tipoForzado = $('#vTipoSelect').value;
+    let precio = 0, nombre = '';
+    if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
+    else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
+    else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
+    else {
+      if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
+      else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
+      else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
+      else { precio = 4900; nombre = 'Estándar'; }
+    }
+    try {
+      await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
+      showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
+      $('#vCant').value = 1;
+      updatePreview();
+      // Recargar pestaña para actualizar datos
+      await renderAdminTab('ventas');
+    } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
+  };
+
+  // Mostrar últimos pedidos
+  const lista = $('#ultimosPedidosList');
+  if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
+  else {
+    lista.innerHTML = G.pedidosAll.slice(0,10).map(p => `
+      <div class="order-card">
+        <div class="order-meta">
+          <span class="order-num">${p.invoice_number}</span>
+          <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
+          <span class="order-total">${pesos(p.total)}</span>
+        </div>
+        <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
+        ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Marcar entregado</button>` : ''}
+      </div>
+    `).join('');
   }
+  window.marcarEntregadoDesdeVentas = async (id) => {
+    await dbUpdatePedido(id, { status: 'Entregado' });
+    await renderAdminTab('ventas');
+  };
 
-  const aVentaCant = $('#aVentaCant');
-  const aVentaForzarTipo = $('#aVentaForzarTipo');
-  if (aVentaCant) aVentaCant.addEventListener('input', updateVentaPreview);
-  if (aVentaForzarTipo) aVentaForzarTipo.addEventListener('change', updateVentaPreview);
-  updateVentaPreview();
+  // Exportar CSV
+  $('#exportPedidosBtn').onclick = () => {
+    let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
+    G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
+  $('#exportVentasBtn').onclick = () => {
+    let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
+    G.ventasAll.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
 
-  const aVentaBtn = $('#aVentaBtn');
-  if (aVentaBtn) {
-    aVentaBtn.onclick = async () => {
-      const aVentaCantVal = $('#aVentaCant');
-      const aVentaForzarTipoVal = $('#aVentaForzarTipo');
-      if (!aVentaCantVal || !aVentaForzarTipoVal) return;
-      let cant = parseInt(aVentaCantVal.value);
-      if (!cant || cant < 1 || cant > 500) { showMsg('aVentaMsg', 'Cantidad inválida', 'error'); return; }
-      let tipoForzado = aVentaForzarTipoVal.value;
-      let precio = 0, tipoNombre = '';
-      if (tipoForzado === 'bodega') { precio = 4300; tipoNombre = 'Bodega'; }
-      else if (tipoForzado === 'restaurante') { precio = 4300; tipoNombre = 'Restaurante'; }
-      else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoNombre = 'Comida rápida'; }
-      else if (tipoForzado === 'comun') { precio = 4900; tipoNombre = 'Común'; }
-      else {
-        if (cant >= 50) { precio = 4300; tipoNombre = 'Mayorista'; }
-        else if (cant >= 20) { precio = 4500; tipoNombre = 'Bodega 20-49'; }
-        else if (cant >= 10) { precio = 4700; tipoNombre = 'Bodega 10-19'; }
-        else { precio = 4900; tipoNombre = 'Estándar'; }
-      }
-      try {
-        await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: tipoNombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
-        showMsg('aVentaMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
-        if (aVentaCantVal) aVentaCantVal.value = 1;
-        updateVentaPreview();
-        G.ventasAll = await dbAllVentas();
-        renderChartDir();
-        renderUltimosPedidos();
-      } catch(e) { showMsg('aVentaMsg', e.message, 'error'); }
-    };
-  }
-
-  const periodoFilter = $('#periodoFilter');
-  if (periodoFilter) periodoFilter.onchange = () => { renderUltimosPedidos(); renderChartPed(); };
-
-  const exportCsvBtn = $('#exportCsvBtn');
-  if (exportCsvBtn) exportCsvBtn.onclick = exportCsvPedidos;
-
-  const exportVentasCsvBtn = $('#exportVentasCsvBtn');
-  if (exportVentasCsvBtn) exportVentasCsvBtn.onclick = exportVentasCSV;
-
-  // Renderizar gráficos después de que el DOM esté listo
-  setTimeout(() => {
-    renderChartDir();
-    renderChartPed();
-    renderUltimosPedidos();
-  }, 100);
+  // Gráficos
+  renderChartDir();
+  renderChartPed();
 }
 
 function renderChartDir() {
@@ -1089,11 +1083,7 @@ function renderChartDir() {
   G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
   const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
   if (G.chartDir) G.chartDir.destroy();
-  if (!sorted.length) { 
-    const ctx = canvas.getContext('2d'); 
-    ctx.clearRect(0,0,canvas.width,canvas.height); 
-    return; 
-  }
+  if (!sorted.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
   G.chartDir = new Chart(canvas, {
     type: 'bar',
     data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas directas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(184,113,42,0.75)', borderRadius: 4 }] },
@@ -1104,17 +1094,11 @@ function renderChartDir() {
 function renderChartPed() {
   const canvas = $('#chartPed');
   if (!canvas) return;
-  const periodo = $('#periodoFilter')?.value || 'todo';
-  const filtrados = filterByPeriod(G.pedidosAll, periodo);
   const mapa = new Map();
-  filtrados.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
+  G.pedidosAll.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
   const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
   if (G.chartPed) G.chartPed.destroy();
-  if (!sorted.length) { 
-    const ctx = canvas.getContext('2d'); 
-    ctx.clearRect(0,0,canvas.width,canvas.height); 
-    return; 
-  }
+  if (!sorted.length) { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); return; }
   G.chartPed = new Chart(canvas, {
     type: 'bar',
     data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Pedidos app', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(59,107,59,0.75)', borderRadius: 4 }] },
@@ -1122,239 +1106,245 @@ function renderChartPed() {
   });
 }
 
-function renderUltimosPedidos() {
-  const cont = $('#ultimosPedidos');
-  if (!cont) return;
-  const periodo = $('#periodoFilter')?.value || 'todo';
-  const filtrados = filterByPeriod(G.pedidosAll, periodo);
-  if (!filtrados.length) { cont.innerHTML = '<div class="muted">Sin pedidos en este período</div>'; return; }
-  cont.innerHTML = filtrados.slice(0,5).map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}">
-    <div class="order-meta"><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span><span class="order-total" style="margin-left:auto">${pesos(p.total)}</span></div>
-    <div class="order-date">${fmtDateShort(p.fecha)}</div>
-  </div>`).join('');
-}
-
-function exportVentasCSV() {
-  if (!G.ventasAll.length) { alert('No hay ventas directas'); return; }
-  let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
-  G.ventasAll.forEach(v => { csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`; });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-function exportCsvPedidos() {
-  let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
-  G.pedidosAll.forEach(p => { csv += `"${p.invoice_number}","${fmtDate(p.fecha)}","${p.total}","${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`; });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
 // ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
-  console.log('Cargando pedidos...');
-  cont.innerHTML = '<div class="loader"></div>';
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
-    G.pedidosAll = await dbAllPedidos();
-    console.log('Pedidos recibidos:', G.pedidosAll.length);
-  } catch(e) {
-    console.error('Error cargando pedidos:', e);
-    cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`;
-    return;
-  }
-
-  cont.innerHTML = `<div class="card"><div class="card-title">📦 Todos los pedidos <small>${G.pedidosAll.length} total</small></div>
-    <div class="filter-bar" id="pedFilterBar">
-      <button class="chip active" data-pf="todo">Todos</button>
-      <button class="chip" data-pf="Pendiente">Pendientes</button>
-      <button class="chip" data-pf="Entregado">Entregados</button>
-    </div>
-    <div id="adminPedidosList"></div>
-  </div>`;
-
-  function renderList(filter) {
-    const list = filter === 'todo' ? G.pedidosAll : G.pedidosAll.filter(p => p.status === filter);
-    const cont2 = $('#adminPedidosList');
-    if (!cont2) return;
-    if (!list.length) { cont2.innerHTML = '<div class="cart-empty">Sin pedidos</div>'; return; }
-    cont2.innerHTML = list.map(p => `<div class="order-card ${p.status==='Entregado'?'delivered':''}">
-      <div class="order-meta">
-        <div><span class="order-num">${escAttr(p.invoice_number)}</span>
-          <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
+    const { data: pedidos, error } = await supabase.from('pedidos').select('*').order('fecha', { ascending: false });
+    if (error) throw error;
+    G.pedidosAll = pedidos || [];
+    if (!G.pedidosAll.length) {
+      cont.innerHTML = '<div class="card"><div class="cart-empty">No hay pedidos registrados</div></div>';
+      return;
+    }
+    let html = `<div class="card"><div class="card-title">📦 Todos los pedidos (${G.pedidosAll.length})</div>`;
+    G.pedidosAll.forEach(p => {
+      html += `
+        <div class="order-card">
+          <div class="order-meta">
+            <div><span class="order-num">${p.invoice_number}</span> <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div>
+            <span class="order-date">${fmtDate(p.fecha)}</span>
+          </div>
+          <div>${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${pesos(p.total)}</div>
+          ${p.nota ? `<div class="muted">📝 ${p.nota}</div>` : ''}
+          <div style="margin-top:8px">
+            ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="adminMarcarEntregado('${p.id}')">Marcar entregado</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="adminVerFactura('${p.id}')">Factura</button>
+          </div>
         </div>
-        <span class="order-date">${fmtDate(p.fecha)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:.4rem">
-        <span style="font-size:.85rem;color:var(--c-muted)">${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas</span>
-        <span class="order-total">${pesos(p.total)}</span>
-      </div>
-      ${p.nota ? `<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;">📝 ${escAttr(p.nota)}</div>` : ''}
-      <div style="margin-top:.65rem;display:flex;gap:.5rem;flex-wrap:wrap">
-        ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="adminMarkDelivered(${p.id})"><i class="fas fa-check"></i> Marcar entregado</button>` : ''}
-        <button class="btn btn-ghost btn-sm" onclick="adminShowInvoice(${p.id})"><i class="fas fa-file-invoice"></i> Factura</button>
-      </div>
-    </div>`).join('');
-  }
-
-  const chips = cont.querySelectorAll('[data-pf]');
-  chips.forEach(btn => {
-    btn.onclick = () => {
-      chips.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderList(btn.dataset.pf);
+      `;
+    });
+    cont.innerHTML = html + `</div>`;
+    window.adminMarcarEntregado = async (id) => {
+      await dbUpdatePedido(id, { status: 'Entregado' });
+      await renderAdminTab('pedidos');
     };
-  });
-  renderList('todo');
+    window.adminVerFactura = (id) => {
+      const p = G.pedidosAll.find(x => x.id == id);
+      if (!p) return;
+      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
+      $('invoiceModal').classList.remove('hidden');
+    };
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  }
 }
-window.adminMarkDelivered = async (id) => {
-  await dbUpdatePedido(id, { status: 'Entregado' });
-  G.pedidosAll = await dbAllPedidos();
-  await renderAdminTab('pedidos');
-};
-window.adminShowInvoice = async (pedidoId) => {
-  const p = G.pedidosAll.find(x => x.id == pedidoId);
-  if (!p) return;
-  $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7</div></div><div class="invoice-num"><div style="font-size:1rem;font-weight:700">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.status}</div></div></div><div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
-  $('invoiceModal').classList.remove('hidden');
-};
 
 // ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
-  console.log('Cargando usuarios...');
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
-    G.usersAll = await dbAllUsers();
-    console.log('Usuarios recibidos:', G.usersAll.length);
+    const { data: users, error } = await supabase.from('usuarios').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    G.usersAll = users || [];
+    if (!G.usersAll.length) {
+      cont.innerHTML = '<div class="card"><div class="cart-empty">No hay usuarios registrados</div></div>';
+      return;
+    }
+    let html = `<div class="card"><div class="card-title">👥 Gestión de usuarios (${G.usersAll.length})</div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th>Admin</th><th>Acciones</th></tr></thead><tbody>`;
+    const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
+    G.usersAll.forEach(u => {
+      html += `
+        <tr>
+          <td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td>
+          <td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td>
+          <td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td>
+          <td><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td>
+          <td><button class="btn btn-primary btn-sm" onclick="adminGuardarUsuario('${u.user_id}')">Guardar</button> <button class="btn btn-danger btn-sm" onclick="adminEliminarUsuario('${u.user_id}')">Eliminar</button></td>
+        </tr>
+      `;
+    });
+    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
+    window.adminGuardarUsuario = async (uid) => {
+      const nombre = $(`un_${uid}`).value.trim();
+      const tipo = $(`ut_${uid}`).value;
+      const es_admin = $(`ua_${uid}`).checked;
+      if (!nombre) { showMsg('usersAdminMsg', 'El nombre no puede estar vacío', 'error'); return; }
+      try {
+        await dbUpdateUser(uid, { nombre, tipo, es_admin });
+        showMsg('usersAdminMsg', '✅ Usuario actualizado', 'success');
+        setTimeout(() => clearMsg('usersAdminMsg'), 3000);
+        await renderAdminTab('usuarios');
+      } catch(e) { showMsg('usersAdminMsg', '❌ ' + e.message, 'error'); }
+    };
+    window.adminEliminarUsuario = async (uid) => {
+      if (uid === G.userId) { alert('No puedes eliminarte a ti mismo'); return; }
+      if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return;
+      try {
+        await dbDeleteUser(uid);
+        await renderAdminTab('usuarios');
+      } catch(e) { alert('Error: ' + e.message); }
+    };
   } catch(e) {
-    console.error('Error cargando usuarios:', e);
-    cont.innerHTML = `<div class="alert alert-error">Error al cargar usuarios: ${escHtml(e.message)}</div>`;
-    return;
+    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
   }
-  if (!G.usersAll.length) {
-    cont.innerHTML = `<div class="alert alert-info">No se encontraron usuarios en la base de datos. Verifica las políticas RLS o que haya usuarios registrados.</div>`;
-    return;
-  }
-  cont.innerHTML = `<div class="card"><div class="card-title">👥 Gestión de usuarios <small>${G.usersAll.length} total</small></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th style="text-align:center">Admin</th><th>Acciones</th></table></thead><tbody id="usersTableBody"></tbody></table></div><div id="usersMsg" style="margin-top:.75rem"></div></div>`;
-  const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
-  const tbody = $('#usersTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = G.usersAll.map(u => `
-    <tr>
-      <td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td>
-      <td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td>
-      <td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td>
-      <td style="text-align:center"><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td>
-      <td style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="adminSaveUser('${u.user_id}')"><i class="fas fa-save"></i></button><button class="btn btn-danger btn-sm" onclick="adminDeleteUser('${u.user_id}')"><i class="fas fa-trash"></i></button></td>
-    </tr>`).join('');
 }
-window.adminSaveUser = async (uid) => {
-  const nombre = $(`un_${uid}`).value.trim();
-  const tipo = $(`ut_${uid}`).value;
-  const es_admin = $(`ua_${uid}`).checked;
-  if (!nombre) { showMsg('usersMsg', 'El nombre no puede estar vacío', 'error'); return; }
-  try {
-    await dbUpdateUser(uid, { nombre, tipo, es_admin });
-    showMsg('usersMsg', '✅ Usuario actualizado', 'success');
-    setTimeout(() => clearMsg('usersMsg'), 4000);
-    await renderAdminTab('usuarios');
-  } catch(e) { showMsg('usersMsg', '❌ ' + e.message, 'error'); }
-};
-window.adminDeleteUser = async (uid) => {
-  if (uid === G.userId) { alert('No puedes eliminar tu propio usuario administrador.'); return; }
-  if (!confirm('¿Eliminar usuario? Esta acción no se puede deshacer.')) return;
-  try {
-    await dbDeleteUser(uid);
-    await renderAdminTab('usuarios');
-  } catch(e) { alert('Error al eliminar: ' + e.message); }
-};
 
 // ========== SUGERENCIAS ==========
 async function renderAdminSugerencias(cont) {
-  let sugs = [];
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
-    sugs = await dbAllSuggs();
+    const { data: sugs, error } = await supabase.from('sugerencias').select('*').order('fecha', { ascending: false });
+    if (error) throw error;
+    if (!sugs || !sugs.length) {
+      cont.innerHTML = '<div class="card"><div class="cart-empty">Sin sugerencias aún</div></div>';
+      return;
+    }
+    let html = `<div class="card"><div class="card-title">💬 Buzón de sugerencias (${sugs.length})</div>`;
+    sugs.forEach(s => {
+      html += `<div class="sug-card"><div><strong>${escHtml(s.nombre||'Anónimo')}</strong> ${s.email?`· ${escHtml(s.email)}`:''}</div><p>${escHtml(s.mensaje)}</p><div class="sug-meta">${fmtDate(s.fecha)}</div></div>`;
+    });
+    cont.innerHTML = html + `</div>`;
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${escHtml(e.message)}</div>`;
-    return;
+    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
   }
-  cont.innerHTML = `<div class="card"><div class="card-title">💬 Buzón de sugerencias <small>${sugs.length} mensajes</small></div>` + (sugs.length ? sugs.map(s => `<div class="sug-card"><div style="font-weight:600">${escHtml(s.nombre||'Anónimo')} ${s.email?`<span style="font-weight:400;font-size:.85rem;color:var(--c-muted)">· ${escHtml(s.email)}</span>`:''}</div><p style="margin-top:.35rem">${escHtml(s.mensaje)}</p><div class="sug-meta">${fmtDate(s.fecha)}</div></div>`).join('') : '<div class="cart-empty">Sin sugerencias aún</div>') + '</div>';
 }
 
 // ========== RESPALDO ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
-  cont.innerHTML = `<div class="card"><div class="card-title">💾 Respaldo de datos</div><p style="margin-bottom:1rem;color:var(--c-muted)">Exporta todos los datos de la aplicación.</p><div style="display:flex;flex-wrap:wrap;gap:.75rem"><button class="btn btn-primary" id="exportJsonBtn"><i class="fas fa-download"></i> JSON completo</button><button class="btn btn-ghost" id="exportPedCsvBtn"><i class="fas fa-file-csv"></i> CSV pedidos</button><button class="btn btn-ghost" id="exportVenCsvBtn"><i class="fas fa-file-csv"></i> CSV ventas</button></div><div id="backupMsg" style="margin-top:.75rem"></div></div><div class="card"><div class="card-title">🖼️ Logo personalizado</div><div class="logo-upload" onclick="$('logoFileInput').click()">${logoActual?`<img src="${escAttr(logoActual)}" class="logo-preview">`:'<img src="logo.svg" class="logo-preview" onerror="this.outerHTML=\'<i class=\\\'fas fa-image\\\' style=\\\'font-size:2rem;color:var(--c-muted)\\\'></i>\'">'}<p style="margin-top:.5rem;color:var(--c-muted);font-size:.85rem">Haz clic para cambiar el logo</p></div>${logoActual?`<button class="btn btn-ghost btn-sm mt-1" id="clearLogoBtn"><i class="fas fa-times"></i> Restaurar logo original</button>`:''}</div>`;
-  $('#exportJsonBtn').onclick = async () => {
-    const btn = $('#exportJsonBtn'); btn.disabled = true; btn.textContent = 'Exportando…';
-    try {
-      const data = { fecha_exportacion: new Date().toISOString(), usuarios: await dbAllUsers(), pedidos: await dbAllPedidos(), ventas_directas: await dbAllVentas(), sugerencias: await dbAllSuggs() };
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)], { type: 'application/json' })); a.download = `respaldo_${new Date().toISOString().slice(0,10)}.json`; a.click();
-      showMsg('backupMsg', '✅ Respaldo exportado', 'success');
-    } catch(e) { showMsg('backupMsg', '❌ ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-download"></i> JSON completo'; }
+  cont.innerHTML = `
+    <div class="card">
+      <div class="card-title">💾 Respaldo de datos</div>
+      <div style="margin-bottom:1rem;color:var(--c-muted)">Exporta todos los datos en formato JSON o CSV.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.75rem">
+        <button class="btn btn-primary" id="exportJsonFull">JSON completo</button>
+        <button class="btn btn-ghost" id="exportPedidosFull">CSV pedidos</button>
+        <button class="btn btn-ghost" id="exportVentasFull">CSV ventas</button>
+      </div>
+      <div id="backupFullMsg" class="mt-1"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🖼️ Logo personalizado</div>
+      <div class="logo-upload" onclick="$('logoFileInput').click()">
+        ${logoActual ? `<img src="${logoActual}" class="logo-preview">` : '<img src="logo.svg" class="logo-preview" onerror="this.outerHTML=\'<i class=\'fas fa-image\'></i>\'">'}
+        <p>Haz clic para cambiar el logo</p>
+      </div>
+      ${logoActual ? `<button class="btn btn-ghost btn-sm mt-1" id="resetLogoFull">Restaurar logo original</button>` : ''}
+    </div>
+  `;
+  $('#exportJsonFull').onclick = async () => {
+    const [usuarios, pedidos, ventas, sugerencias] = await Promise.all([
+      supabase.from('usuarios').select('*'), supabase.from('pedidos').select('*'),
+      supabase.from('ventas_directas').select('*'), supabase.from('sugerencias').select('*')
+    ]);
+    const data = {
+      fecha: new Date().toISOString(),
+      usuarios: usuarios.data || [],
+      pedidos: pedidos.data || [],
+      ventas_directas: ventas.data || [],
+      sugerencias: sugerencias.data || []
+    };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = `respaldo_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    showMsg('backupFullMsg', '✅ Respaldo exportado', 'success');
   };
-  $('#exportPedCsvBtn').onclick = async () => {
-    const ped = await dbAllPedidos();
+  $('#exportPedidosFull').onclick = async () => {
+    const { data } = await supabase.from('pedidos').select('*');
+    if (!data || !data.length) { alert('No hay pedidos'); return; }
     let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
-    ped.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}","${p.total}","${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'pedidos.csv'; a.click();
+    data.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
   };
-  $('#exportVenCsvBtn').onclick = async () => {
-    const ven = await dbAllVentas();
-    let csv = 'Fecha,Tipo,Cantidad,P.Unitario,Total\n';
-    ven.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'ventas_directas.csv'; a.click();
+  $('#exportVentasFull').onclick = async () => {
+    const { data } = await supabase.from('ventas_directas').select('*');
+    if (!data || !data.length) { alert('No hay ventas directas'); return; }
+    let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
+    data.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
   };
-  const clr = $('#clearLogoBtn');
-  if (clr) clr.onclick = () => { if (confirm('¿Restaurar el logo original?')) { lsSet('granjaLogo', ''); ['clientTopLogo','adminTopLogo'].forEach(id => setLogoEl($(id))); renderAdminRespaldo(cont); } };
+  const resetBtn = $('#resetLogoFull');
+  if (resetBtn) resetBtn.onclick = () => {
+    lsSet('granjaLogo', '');
+    ['clientTopLogo', 'adminTopLogo'].forEach(id => setLogoEl($(id)));
+    renderAdminRespaldo(cont);
+  };
 }
 
 // ========== SUPER ADMIN ==========
 async function renderAdminAdmins(cont) {
-  G.usersAll = await dbAllUsers();
-  const admins = G.usersAll.filter(u => u.es_admin === true);
-  cont.innerHTML = `<div class="card"><div class="card-title"><i class="fas fa-crown"></i> Gestión de Administradores</div><div id="adminsMsg"></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody id="adminsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="btnAddAdmin"><i class="fas fa-plus"></i> Agregar administrador</button></div>`;
-  const tbody = $('#adminsTableBody');
-  tbody.innerHTML = admins.map(u => `
-    <tr>
-      <td><input id="adm_name_${u.user_id}" value="${escAttr(u.nombre)}"></td>
-      <td style="white-space:nowrap">${escAttr(u.email)}</td>
-      <td>${u.es_admin ? '<span class="badge badge-admin">Super Admin</span>' : 'Admin'}</td>
-      <td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="updateAdmin('${u.user_id}')"><i class="fas fa-save"></i></button>${u.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${u.user_id}')"><i class="fas fa-trash"></i></button>` : ''}</td>
-    </tr>`).join('');
-  window.updateAdmin = async (uid) => {
-    const newName = $(`adm_name_${uid}`).value.trim();
-    if (!newName) { showMsg('adminsMsg', 'El nombre no puede estar vacío', 'error'); return; }
-    try {
-      await dbUpdateUser(uid, { nombre: newName });
-      showMsg('adminsMsg', '✅ Administrador actualizado', 'success');
-      await renderAdminTab('admins');
-    } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
-  };
-  window.deleteAdmin = async (uid) => {
-    if (!confirm('¿Eliminar este administrador? Ya no podrá acceder como admin.')) return;
-    try {
-      await dbUpdateUser(uid, { es_admin: false });
-      showMsg('adminsMsg', '✅ Administrador eliminado', 'success');
-      await renderAdminTab('admins');
-    } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
-  };
-  $('#btnAddAdmin').onclick = async () => {
-    const email = prompt('Correo electrónico del nuevo administrador:');
-    if (!email) return;
-    const nombre = prompt('Nombre completo:');
-    if (!nombre) return;
-    const pass = Math.random().toString(36).slice(2, 10);
-    try {
-      const { data, error } = await window.supabase.auth.signUp({ email, password: pass, options: { data: { nombre } } });
-      if (error) throw error;
-      await window.supabase.from('usuarios').update({ es_admin: true, nombre }).eq('user_id', data.user.id);
-      alert(`Administrador creado. Contraseña temporal: ${pass}\nEl usuario deberá cambiar su contraseña después de iniciar sesión.`);
-      await renderAdminTab('admins');
-    } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
-  };
+  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  try {
+    const { data: users } = await supabase.from('usuarios').select('*');
+    const admins = (users || []).filter(u => u.es_admin === true);
+    if (!admins.length) {
+      cont.innerHTML = '<div class="card"><div class="cart-empty">No hay administradores</div><button class="btn btn-primary btn-sm mt-1" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>';
+    } else {
+      let html = `<div class="card"><div class="card-title">👑 Gestión de administradores (${admins.length})</div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead><tbody>`;
+      admins.forEach(a => {
+        html += `
+          <tr>
+            <td><input id="ad_name_${a.user_id}" value="${escAttr(a.nombre)}"></td>
+            <td>${escAttr(a.email)}</td>
+            <td><button class="btn btn-primary btn-sm" onclick="adminGuardarAdmin('${a.user_id}')">Guardar</button> ${a.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="adminEliminarAdmin('${a.user_id}')">Eliminar</button>` : ''}</td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      cont.innerHTML = html;
+    }
+    window.adminGuardarAdmin = async (uid) => {
+      const nombre = $(`ad_name_${uid}`).value.trim();
+      if (!nombre) { showMsg('adminsMsg', 'El nombre no puede estar vacío', 'error'); return; }
+      try {
+        await supabase.from('usuarios').update({ nombre }).eq('user_id', uid);
+        showMsg('adminsMsg', '✅ Administrador actualizado', 'success');
+        await renderAdminTab('admins');
+      } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+    };
+    window.adminEliminarAdmin = async (uid) => {
+      if (!confirm('¿Eliminar este administrador? Ya no podrá acceder como admin.')) return;
+      try {
+        await supabase.from('usuarios').update({ es_admin: false }).eq('user_id', uid);
+        showMsg('adminsMsg', '✅ Administrador eliminado', 'success');
+        await renderAdminTab('admins');
+      } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+    };
+    $('#addAdminBtn').onclick = async () => {
+      const email = prompt('Correo electrónico del nuevo administrador:');
+      if (!email) return;
+      const nombre = prompt('Nombre completo:');
+      if (!nombre) return;
+      const pass = Math.random().toString(36).slice(2, 10);
+      try {
+        const { data, error } = await window.supabase.auth.signUp({ email, password: pass, options: { data: { nombre } } });
+        if (error) throw error;
+        await window.supabase.from('usuarios').update({ es_admin: true, nombre }).eq('user_id', data.user.id);
+        alert(`Administrador creado. Contraseña temporal: ${pass}\nEl usuario deberá cambiar su contraseña después de iniciar sesión.`);
+        await renderAdminTab('admins');
+      } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+    };
+  } catch(e) {
+    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  }
 }
 
 // =================================================================
@@ -1375,7 +1365,6 @@ async function renderAdminAdmins(cont) {
     G.direccion = profile.direccion || '';
     console.log('Perfil cargado:', G);
   } catch(e) {
-    console.error('Error cargando perfil:', e);
     await window.supabase.auth.signOut();
     $('authPage').style.display = '';
     initAuthPage();
