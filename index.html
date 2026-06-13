@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS COMPLETOS (última versión) ========== */
+/* ========== ESTILOS COMPLETOS (última versión funcional) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -665,6 +665,18 @@ function renderFooter(id) {
 }
 
 // =================================================================
+//  FUNCIÓN PARA OBTENER LOGO CON TAMAÑO VARIABLE
+// =================================================================
+function getLogoHtml(size = '40px') {
+  const saved = lsGet('granjaLogo');
+  if (saved) {
+    return `<img src="${escAttr(saved)}" style="width:${size}; height:${size}; border-radius: 50%; object-fit: cover;" alt="Logo">`;
+  } else {
+    return `<span style="font-size:${size}; line-height:1;">🥚</span>`;
+  }
+}
+
+// =================================================================
 //  MODALES GLOBALES
 // =================================================================
 function initModals() {
@@ -843,7 +855,7 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE
+//  CLIENT PAGE (con logo en carrito vacío y sin pedidos)
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -904,7 +916,7 @@ function buildClientOrderPanel() {
       </div>
       <div class="card">
         <div class="card-title">🧺 Carrito <small id="cartCount">0 cubetas</small></div>
-        <div id="cartContent"><div class="cart-empty"><span class="egg-empty">🥚</span>Tu carrito está vacío</div></div>
+        <div id="cartContent"><div class="cart-empty">${getLogoHtml('50px')}<br>Tu carrito está vacío</div></div>
         <button class="btn btn-success btn-block mt-2" id="confirmOrderBtn"><i class="fas fa-check-circle"></i> Confirmar pedido</button>
         <div id="orderMsg" style="margin-top:.5rem"></div>
       </div>
@@ -939,7 +951,7 @@ function addToCart() {
 function renderCart() {
   const cont = $('cartContent');
   if (!G.carrito.length) {
-    cont.innerHTML = '<div class="cart-empty"><span class="egg-empty">🥚</span>Tu carrito está vacío</div>';
+    cont.innerHTML = `<div class="cart-empty">${getLogoHtml('50px')}<br>Tu carrito está vacío</div>`;
     $('cartCount').textContent = '0 cubetas';
     return;
   }
@@ -1001,7 +1013,7 @@ async function loadClientOrders() {
   cont.innerHTML = '<div class="loader"></div>';
   try {
     const pedidos = await dbPedidosUser(G.userId);
-    if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem"><span class="egg-empty">🥚</span>Aún no tienes pedidos</div>'; return; }
+    if (!pedidos.length) { cont.innerHTML = `<div class="cart-empty" style="padding:2rem">${getLogoHtml('60px')}<br>Aún no tienes pedidos</div>`; return; }
     const ahora = new Date();
     const hayEntregados = pedidos.some(p => p.status === 'Entregado');
     let notifHtml = '';
@@ -1354,7 +1366,7 @@ function renderChartPed() {
   });
 }
 
-// ========== PEDIDOS ==========
+// ========== PEDIDOS (unificado con botón Pagar para Pendiente y Entregado) ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
@@ -1424,7 +1436,7 @@ async function renderAdminPedidos(cont) {
           <div>${item.detalle} · ${pesos(item.total)}</div>
           ${item.nota ? `<div class="muted">📝 ${item.nota}</div>` : ''}
           <div style="margin-top:8px">
-            ${item.status === 'Pendiente' ? (item.tipo === 'pedido' ? 
+            ${(item.status === 'Pendiente' || item.status === 'Entregado') ? (item.tipo === 'pedido' ? 
               `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${item.id}')">Pagar</button>` :
               `<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta('${item.id}')">Pagar</button>`) : ''}
             ${item.status === 'Pendiente' ? (item.tipo === 'pedido' ?
