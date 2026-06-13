@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS COMPLETOS ========== */
+/* ========== ESTILOS (idénticos a la versión anterior, sin cambios) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -37,7 +37,6 @@
   --font-mono:  'DM Mono', monospace;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
   font-family: var(--font-body);
   font-size: 1.05rem;
@@ -412,7 +411,6 @@ const SUPABASE_URL     = "https://ihrgoufqnbekhcqjulsy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_M6xBnv5GIEg0h59ktGYOHg_cWw8cnVo";
 window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ---------- Estado global ----------
 let G = {
   userId: null, tipo: null, esAdmin: false,
   nombre: '', email: '', documento: '', direccion: '',
@@ -1057,7 +1055,6 @@ window.clienteCancelarPedido = async (id) => {
     await loadClientOrders();
   }
 };
-// Factura en cliente con datos de contacto
 window.showClientInvoice = async (pedidoId) => {
   const pedidos = await dbPedidosUser(G.userId);
   const p = pedidos.find(x => x.id === pedidoId);
@@ -1075,7 +1072,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p><strong>${usuario?.nombre || G.nombre}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody><table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -1492,7 +1489,6 @@ async function renderAdminPedidos(cont) {
     } else {
       ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
     }
-    // Factura en admin con datos de cliente
     window.verFactura = async (tipo, id) => {
       let transaccion;
       if (tipo === 'pedido') transaccion = G.pedidosAll.find(p => p.id == id);
@@ -1519,7 +1515,7 @@ async function renderAdminPedidos(cont) {
             <div class="invoice-num">${transaccion.invoice_number || 'Sin factura'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
           </div>
           <div class="invoice-section"><h4>Cliente</h4>${clienteHtml}</div>
-          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th><tr></thead><tbody>${itemsHtml}</tbody></table></div>
+          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
           ${transaccion.nota ? `<p class="invoice-note">Nota: ${transaccion.nota}</p>` : ''}
           <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
           <div class="invoice-footer">IVA exento — Art. 424 E.T.</div>
@@ -1540,7 +1536,7 @@ async function renderAdminInventario(cont) {
     if (error) throw error;
     let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
     (movimientos || []).forEach(m => {
-      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}<td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
+      movimientosHtml += `<td><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
     });
     movimientosHtml += `</tbody></table></div>`;
     cont.innerHTML = `
