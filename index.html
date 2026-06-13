@@ -922,7 +922,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS (simplificada y funcional) ==========
+// ========== VENTAS (CORREGIDA) ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -983,101 +983,119 @@ async function renderAdminVentas(cont) {
         <button class="btn btn-ghost btn-sm" id="exportVentasBtn">CSV ventas</button>
       </div>
     </div>
-    <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>`;
+    <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>
+    <div class="card"><div class="card-title">📈 Pedidos app por día</div><canvas id="chartPed" height="100"></canvas></div>`;
 
-  // Actualizar preview precio
-  const updatePreview = () => {
-    const cant = parseInt($('#vCant').value) || 0;
-    let tipoForzado = $('#vTipoSelect').value;
-    let precio = 0, tipoTexto = '';
-    if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
-    else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
-    else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoTexto = 'Comida rápida (forzado)'; }
-    else {
-      if (cant >= 50) { precio = 4300; tipoTexto = 'Mayorista (≥50)'; }
-      else if (cant >= 20) { precio = 4500; tipoTexto = 'Bodega (20-49)'; }
-      else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
-      else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
+  // Usar requestAnimationFrame para asegurar que el DOM esté listo
+  requestAnimationFrame(() => {
+    // Actualizar preview precio
+    const vCant = $('vCant');
+    const vTipoSelect = $('vTipoSelect');
+    const vPrecioPreview = $('vPrecioPreview');
+    const vTipoPreview = $('vTipoPreview');
+    const vTotalPreview = $('vTotalPreview');
+
+    if (!vCant || !vTipoSelect) {
+      console.error('Elementos de ventas no encontrados');
+      return;
     }
-    $('#vPrecioPreview').textContent = pesos(precio);
-    $('#vTipoPreview').textContent = tipoTexto;
-    $('#vTotalPreview').textContent = pesos(cant * precio);
-  };
-  $('#vCant').oninput = updatePreview;
-  $('#vTipoSelect').onchange = updatePreview;
-  updatePreview();
 
-  // Registrar venta
-  $('#btnRegistrarVenta').onclick = async () => {
-    const cant = parseInt($('#vCant').value);
-    if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
-    let tipoForzado = $('#vTipoSelect').value;
-    let precio = 0, nombre = '';
-    if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
-    else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
-    else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
-    else {
-      if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
-      else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
-      else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
-      else { precio = 4900; nombre = 'Estándar'; }
+    const updatePreview = () => {
+      const cant = parseInt(vCant.value) || 0;
+      let tipoForzado = vTipoSelect.value;
+      let precio = 0, tipoTexto = '';
+      if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
+      else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
+      else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoTexto = 'Comida rápida (forzado)'; }
+      else {
+        if (cant >= 50) { precio = 4300; tipoTexto = 'Mayorista (≥50)'; }
+        else if (cant >= 20) { precio = 4500; tipoTexto = 'Bodega (20-49)'; }
+        else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
+        else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
+      }
+      if (vPrecioPreview) vPrecioPreview.textContent = pesos(precio);
+      if (vTipoPreview) vTipoPreview.textContent = tipoTexto;
+      if (vTotalPreview) vTotalPreview.textContent = pesos(cant * precio);
+    };
+    vCant.addEventListener('input', updatePreview);
+    vTipoSelect.addEventListener('change', updatePreview);
+    updatePreview();
+
+    // Registrar venta
+    const btnRegistrar = $('btnRegistrarVenta');
+    if (btnRegistrar) {
+      btnRegistrar.onclick = async () => {
+        const cant = parseInt(vCant.value);
+        if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
+        let tipoForzado = vTipoSelect.value;
+        let precio = 0, nombre = '';
+        if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
+        else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
+        else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
+        else {
+          if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
+          else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
+          else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
+          else { precio = 4900; nombre = 'Estándar'; }
+        }
+        try {
+          await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
+          showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
+          vCant.value = 1;
+          updatePreview();
+          // Recargar pestaña
+          await renderAdminTab('ventas');
+        } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
+      };
     }
-    try {
-      await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
-      showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
-      $('#vCant').value = 1;
-      updatePreview();
-      // Recargar pestaña para actualizar datos
-      await renderAdminTab('ventas');
-    } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
-  };
 
-  // Mostrar últimos pedidos
-  const lista = $('#ultimosPedidosList');
-  if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
-  else {
-    lista.innerHTML = G.pedidosAll.slice(0,10).map(p => `
-      <div class="order-card">
-        <div class="order-meta">
-          <span class="order-num">${p.invoice_number}</span>
-          <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
-          <span class="order-total">${pesos(p.total)}</span>
-        </div>
-        <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
-        ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Marcar entregado</button>` : ''}
-      </div>
-    `).join('');
-  }
-  window.marcarEntregadoDesdeVentas = async (id) => {
-    await dbUpdatePedido(id, { status: 'Entregado' });
-    await renderAdminTab('ventas');
-  };
+    // Mostrar últimos pedidos
+    const lista = $('ultimosPedidosList');
+    if (lista) {
+      if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
+      else {
+        lista.innerHTML = G.pedidosAll.slice(0,10).map(p => `
+          <div class="order-card">
+            <div class="order-meta">
+              <span class="order-num">${p.invoice_number}</span>
+              <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
+              <span class="order-total">${pesos(p.total)}</span>
+            </div>
+            <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
+            ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Marcar entregado</button>` : ''}
+          </div>
+        `).join('');
+      }
+    }
 
-  // Exportar CSV
-  $('#exportPedidosBtn').onclick = () => {
-    let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
-    G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-  };
-  $('#exportVentasBtn').onclick = () => {
-    let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
-    G.ventasAll.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-  };
+    // Exportar CSV
+    const exportPed = $('exportPedidosBtn');
+    if (exportPed) exportPed.onclick = () => {
+      let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
+      G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    };
+    const exportVen = $('exportVentasBtn');
+    if (exportVen) exportVen.onclick = () => {
+      let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
+      G.ventasAll.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    };
 
-  // Gráficos
-  renderChartDir();
-  renderChartPed();
+    // Gráficos
+    renderChartDir();
+    renderChartPed();
+  });
 }
 
 function renderChartDir() {
-  const canvas = $('#chartDir');
+  const canvas = $('chartDir');
   if (!canvas) return;
   const mapa = new Map();
   G.ventasAll.forEach(v => { const d = fmtDateShort(v.fecha); mapa.set(d, (mapa.get(d) || 0) + v.total); });
@@ -1092,7 +1110,7 @@ function renderChartDir() {
 }
 
 function renderChartPed() {
-  const canvas = $('#chartPed');
+  const canvas = $('chartPed');
   if (!canvas) return;
   const mapa = new Map();
   G.pedidosAll.forEach(p => { const d = fmtDateShort(p.fecha); mapa.set(d, (mapa.get(d) || 0) + p.total); });
@@ -1105,6 +1123,11 @@ function renderChartPed() {
     options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
   });
 }
+
+window.marcarEntregadoDesdeVentas = async (id) => {
+  await dbUpdatePedido(id, { status: 'Entregado' });
+  await renderAdminTab('ventas');
+};
 
 // ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
@@ -1142,7 +1165,7 @@ async function renderAdminPedidos(cont) {
     window.adminVerFactura = (id) => {
       const p = G.pedidosAll.find(x => x.id == id);
       if (!p) return;
-      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
+      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
       $('invoiceModal').classList.remove('hidden');
     };
   } catch(e) {
@@ -1174,7 +1197,7 @@ async function renderAdminUsuarios(cont) {
         </tr>
       `;
     });
-    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
+    cont.innerHTML = html + `</tbody><td></div><div id="usersAdminMsg"></div></div>`;
     window.adminGuardarUsuario = async (uid) => {
       const nombre = $(`un_${uid}`).value.trim();
       const tipo = $(`ut_${uid}`).value;
@@ -1308,7 +1331,7 @@ async function renderAdminAdmins(cont) {
           </tr>
         `;
       });
-      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      html += `</tbody></tr></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
       cont.innerHTML = html;
     }
     window.adminGuardarAdmin = async (uid) => {
