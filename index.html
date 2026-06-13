@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+/* ========== ESTILOS (idénticos a la versión anterior, sin cambios) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -204,6 +205,8 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .new-orders-card { background: #fef7e0; border-left: 6px solid var(--c-amber); cursor: pointer; transition: transform 0.2s; margin-bottom: 1rem; }
 .new-orders-card:hover { transform: scale(1.01); background: #fff2cc; }
 .order-contact-info { background: #f9f5f0; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
 @media(max-width:768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .form-row.c2 { grid-template-columns: 1fr; }
@@ -221,24 +224,24 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
   <div class="auth-wrap">
     <div class="auth-brand">
       <img src="logo.svg" alt="Logo Granja Villa Myriam" id="authLogoImg" style="display:none;">
-      <span id="authLogoFallback" style="display:block;">🥚</span>
+      <span id="authLogoFallback" style="display:block;">&#x1F95A;</span>
       <h1>Granja Villa Myriam / Emelina</h1>
-      <p>Huevos de Codorniz · Cubetas de 24 unidades</p>
+      <p>Huevos de Codorniz &middot; Cubetas de 24 unidades</p>
     </div>
     <div class="auth-card">
       <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLoginBtn">Iniciar sesión</button>
+        <button class="auth-tab active" id="tabLoginBtn">Iniciar sesion</button>
         <button class="auth-tab" id="tabRegisterBtn">Registrarse</button>
       </div>
       <div id="loginPanel">
         <div class="form-row">
-          <div class="fg"><label>Correo electrónico</label><input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email"></div>
-          <div class="fg"><label>Contraseña</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
+          <div class="fg"><label>Correo electronico</label><input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email"></div>
+          <div class="fg"><label>Contrasena</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
         </div>
         <div id="loginErr"></div>
         <button class="btn btn-primary btn-block mt-1" id="loginBtn">Ingresar</button>
         <div class="fg" style="margin-top:0.75rem; text-align:right;">
-          <span class="link-forgot" id="forgotPasswordLink">¿Olvidaste tu contraseña?</span>
+          <span class="link-forgot" id="forgotPasswordLink">Olvidaste tu contrasena?</span>
         </div>
       </div>
       <div id="registerPanel" class="hidden">
@@ -249,25 +252,25 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
               <option value="negocio">Negocio</option>
               <option value="empresa">Empresa</option>
               <option value="restaurante">Restaurante</option>
-              <option value="comida_rapida">Comida Rápida</option>
-              <option value="pizzeria">Pizzería</option>
+              <option value="comida_rapida">Comida Rapida</option>
+              <option value="pizzeria">Pizzeria</option>
               <option value="bodega">Bodega</option>
               <option value="otro_negocio">Otro Negocio</option>
             </select>
           </div>
         </div>
         <div class="form-row c2">
-          <div class="fg"><label>Nombre completo <span class="req">*</span></label><input type="text" id="regNombre" placeholder="Juan Pérez"></div>
+          <div class="fg"><label>Nombre completo *</label><input type="text" id="regNombre" placeholder="Juan Perez"></div>
           <div class="fg"><label>Documento (CC/NIT)</label><input type="text" id="regDocumento"></div>
         </div>
         <div class="form-row c2">
-          <div class="fg"><label>Teléfono</label><input type="tel" id="regTelefono"></div>
+          <div class="fg"><label>Telefono</label><input type="tel" id="regTelefono"></div>
           <div class="fg"><label>WhatsApp</label><input type="tel" id="regWhatsapp"></div>
         </div>
         <div class="form-row">
-          <div class="fg"><label>Correo electrónico <span class="req">*</span></label><input type="email" id="regEmail" autocomplete="email"></div>
-          <div class="fg"><label>Dirección</label><input type="text" id="regDireccion" placeholder="Ciudad, barrio, calle..."></div>
-          <div class="fg"><label>Contraseña <span class="req">*</span> (mín. 6 car.)</label><input type="password" id="regPassword" autocomplete="new-password"></div>
+          <div class="fg"><label>Correo electronico *</label><input type="email" id="regEmail" autocomplete="email"></div>
+          <div class="fg"><label>Direccion</label><input type="text" id="regDireccion" placeholder="Ciudad, barrio, calle..."></div>
+          <div class="fg"><label>Contrasena * (min. 6 car.)</label><input type="password" id="regPassword" autocomplete="new-password"></div>
         </div>
         <div id="registerErr"></div>
         <button class="btn btn-primary btn-block mt-1" id="registerBtn">Crear cuenta</button>
@@ -335,11 +338,11 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <div id="suggestionModal" class="modal-overlay hidden">
   <div class="modal-box">
-    <div class="modal-title">💬 Enviar sugerencia</div>
+    <div class="modal-title">Enviar sugerencia</div>
     <div class="form-row">
-      <div class="fg"><label>Nombre <span class="req">*</span></label><input type="text" id="sugNombre" placeholder="Tu nombre"></div>
+      <div class="fg"><label>Nombre *</label><input type="text" id="sugNombre" placeholder="Tu nombre"></div>
       <div class="fg"><label>Correo (opcional)</label><input type="email" id="sugEmail" placeholder="correo@ejemplo.com"></div>
-      <div class="fg"><label>Mensaje <span class="req">*</span></label><textarea id="sugMsg" placeholder="Cuéntanos tu sugerencia..."></textarea></div>
+      <div class="fg"><label>Mensaje *</label><textarea id="sugMsg" placeholder="Cuentanos tu sugerencia..."></textarea></div>
     </div>
     <div id="sugErr"></div>
     <div class="modal-actions">
@@ -351,10 +354,10 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <div id="supportModal" class="modal-overlay hidden">
   <div class="modal-box">
-    <div class="modal-title">🛠️ Soporte</div>
+    <div class="modal-title">Soporte</div>
     <p style="margin-bottom:0.75rem;line-height:1.7">
       <strong>WhatsApp:</strong> <a href="https://wa.me/573054126770" target="_blank">305 412 6770</a><br>
-      <strong>Teléfono:</strong> 305 868 60 94<br>
+      <strong>Telefono:</strong> 305 868 60 94<br>
       <strong>Email:</strong> soporte@granjavilla.com
     </p>
     <div class="modal-actions"><button class="btn btn-ghost" id="closeSupportBtn">Cerrar</button></div>
@@ -363,9 +366,9 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <div id="forgotModal" class="modal-overlay hidden">
   <div class="modal-box">
-    <div class="modal-title">🔐 Recuperar contraseña</div>
+    <div class="modal-title">Recuperar contrasena</div>
     <div class="form-row">
-      <div class="fg"><label>Correo electrónico</label><input type="email" id="resetEmail" placeholder="correo@ejemplo.com"></div>
+      <div class="fg"><label>Correo electronico</label><input type="email" id="resetEmail" placeholder="correo@ejemplo.com"></div>
     </div>
     <div id="resetMsg"></div>
     <div class="modal-actions">
@@ -377,14 +380,14 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <div id="newPasswordModal" class="modal-overlay hidden">
   <div class="modal-box">
-    <div class="modal-title">✨ Nueva contraseña</div>
+    <div class="modal-title">Nueva contrasena</div>
     <div class="form-row">
-      <div class="fg"><label>Nueva contraseña (mín. 6 caracteres)</label><input type="password" id="newPassword" placeholder="••••••••"></div>
-      <div class="fg"><label>Confirmar contraseña</label><input type="password" id="confirmPassword" placeholder="••••••••"></div>
+      <div class="fg"><label>Nueva contrasena (min. 6 caracteres)</label><input type="password" id="newPassword" placeholder="••••••••"></div>
+      <div class="fg"><label>Confirmar contrasena</label><input type="password" id="confirmPassword" placeholder="••••••••"></div>
     </div>
     <div id="newPassMsg"></div>
     <div class="modal-actions">
-      <button class="btn btn-success" id="updatePasswordBtn">Actualizar contraseña</button>
+      <button class="btn btn-success" id="updatePasswordBtn">Actualizar contrasena</button>
       <button class="btn btn-ghost" id="closeNewPassBtn">Cancelar</button>
     </div>
   </div>
@@ -392,7 +395,7 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <div id="newOrdersModal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width: 700px;">
-    <div class="modal-title">📦 Pedidos nuevos</div>
+    <div class="modal-title">Pedidos nuevos</div>
     <div id="newOrdersList" style="max-height: 60vh; overflow-y: auto;"></div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="closeNewOrdersBtn">Cerrar</button>
@@ -404,9 +407,9 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 
 <script>
 // =================================================================
-//  CONFIGURACIÓN SUPABASE
+//  CONFIGURACION SUPABASE
 // =================================================================
-const SUPABASE_URL     = "https://ihrgoufqnbekhcqjulsy.supabase.co";
+const SUPABASE_URL      = "https://ihrgoufqnbekhcqjulsy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_M6xBnv5GIEg0h59ktGYOHg_cWw8cnVo";
 window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -440,20 +443,20 @@ function calcPrecio(tipo, cant) {
 function calcRuleText(tipo, cant) {
   cant = Number(cant);
   if (cant <= 0) return '';
-  if (cant >= 50) return '✨ Descuento por volumen (≥50) → $4.300/cubeta';
+  if (cant >= 50) return 'Descuento por volumen (>=50) - $4.300/cubeta';
   switch (tipo) {
-    case 'restaurante': case 'comida_rapida': case 'pizzeria': return '🍕 Precio especial gastronómico: $4.600';
+    case 'restaurante': case 'comida_rapida': case 'pizzeria': return 'Precio especial gastronomico: $4.600';
     case 'bodega':
-      if (cant >= 20) return '📦 Bodega (20-49 cubetas): $4.500';
-      if (cant >= 10) return '📦 Bodega (10-19 cubetas): $4.700';
-      return '📦 Bodega (<10 cubetas): $4.900';
-    default: return '🥚 Precio estándar: $4.900/cubeta';
+      if (cant >= 20) return 'Bodega (20-49 cubetas): $4.500';
+      if (cant >= 10) return 'Bodega (10-19 cubetas): $4.700';
+      return 'Bodega (<10 cubetas): $4.900';
+    default: return 'Precio estandar: $4.900/cubeta';
   }
 }
 function calcPromoText(tipo) {
-  if (tipo === 'bodega') return '📦 Bodega: desde $4.300 con 50+ cubetas. Intermedio $4.500 (20+), $4.700 (10+)';
-  if (['restaurante','comida_rapida','pizzeria'].includes(tipo)) return '🍕 Precio especial $4.600. Lleva 50+ y paga solo $4.300 c/u';
-  return '🥚 Cubeta $4.900 · Compra 50+ y obtén precio de $4.300 cada una';
+  if (tipo === 'bodega') return 'Bodega: desde $4.300 con 50+ cubetas. Intermedio $4.500 (20+), $4.700 (10+)';
+  if (['restaurante','comida_rapida','pizzeria'].includes(tipo)) return 'Precio especial $4.600. Lleva 50+ y paga solo $4.300 c/u';
+  return 'Cubeta $4.900 - Compra 50+ y obtiene precio de $4.300 cada una';
 }
 
 // =================================================================
@@ -502,13 +505,14 @@ async function dbAllPedidos() {
   if (error) throw error;
   return data || [];
 }
-function genInvoiceNumber(prefix = 'FAC') {
+function genInvoiceNumber(prefix) {
+  prefix = prefix || 'FAC';
   const now = Date.now();
   const highRes = performance && performance.now ? Math.floor(performance.now() * 1000) : 0;
-  const unique = `${now}${highRes}`.toString(36).toUpperCase();
+  const unique = ('' + now + highRes).toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 10).toUpperCase();
   const userIdPart = G.userId ? '-' + G.userId.slice(-6).toUpperCase() : '';
-  return `${prefix}-${unique}-${random}${userIdPart}`;
+  return prefix + '-' + unique + '-' + random + userIdPart;
 }
 async function dbCreatePedido(p) {
   const { error } = await window.supabase.from('pedidos').insert(p);
@@ -566,7 +570,8 @@ async function getStock() {
   }
   return data.cubetas_disponibles;
 }
-async function updateStock(cantidad, motivo, tipoMovimiento = 'ajuste') {
+async function updateStock(cantidad, motivo, tipoMovimiento) {
+  tipoMovimiento = tipoMovimiento || 'ajuste';
   const { data: stockData, error: fetchError } = await window.supabase.from('stock').select('cubetas_disponibles').eq('id', 1).single();
   if (fetchError) throw fetchError;
   const nuevoStock = stockData.cubetas_disponibles + cantidad;
@@ -606,16 +611,16 @@ function fmtDate(d) {
     const yy = dt.getFullYear();
     const hh = String(dt.getHours()).padStart(2,'0');
     const mi = String(dt.getMinutes()).padStart(2,'0');
-    return `${dd} ${mo} ${yy}, ${hh}:${mi}`;
+    return dd + ' ' + mo + ' ' + yy + ', ' + hh + ':' + mi;
   } catch(_) { return String(d); }
 }
 function fmtDateShort(d) {
   try {
     const dt = new Date(d);
-    return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+    return String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0') + '/' + dt.getFullYear();
   } catch(_) { return String(d); }
 }
-function showMsg(id, msg, type) { const el = document.getElementById(id); if (el) el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`; }
+function showMsg(id, msg, type) { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>'; }
 function clearMsg(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
 function $(id) { return document.getElementById(id); }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(_) {} }
@@ -627,9 +632,9 @@ function setLogoEl(el) {
   if (!el) return;
   const saved = lsGet('granjaLogo');
   if (saved) {
-    el.innerHTML = `<img src="${escAttr(saved)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo">`;
+    el.innerHTML = '<img src="' + escAttr(saved) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo">';
   } else {
-    el.innerHTML = `<img src="logo.svg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:1.4rem;line-height:44px;text-align:center;display:block\'>🥚</span>'">`;
+    el.innerHTML = '<img src="logo.svg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo" onerror="this.parentElement.innerHTML=\'<span style=&quot;font-size:1.4rem;line-height:44px;text-align:center;display:block&quot;>&#x1F95A;</span>\'">';
   }
 }
 function updateAuthLogo() {
@@ -646,36 +651,30 @@ function updateAuthLogo() {
   }
 }
 function renderShippingCard() {
-  return `
-    <div class="shipping-card">
-      <div class="card-title">🚚 Políticas de envío</div>
-      <p>✅ <strong>Ubaté:</strong> Envío gratis a partir de 2 cubetas.</p>
-      <p>✅ <strong>Pueblos cercanos (Sutatausa, Cucunubá, Lenguazaque, etc.):</strong> Envío gratis si el pedido supera las 20 cubetas.</p>
-      <p>⚠️ <strong>Otras ciudades o municipios:</strong> Los gastos de envío corren por cuenta del cliente (sujeto a cotización).</p>
-    </div>
-  `;
+  return '<div class="shipping-card"><div class="card-title">Politicas de envio</div>' +
+    '<p><strong>Ubate:</strong> Envio gratis a partir de 2 cubetas.</p>' +
+    '<p><strong>Pueblos cercanos (Sutatausa, Cucunuba, Lenguazaque, etc.):</strong> Envio gratis si el pedido supera las 20 cubetas.</p>' +
+    '<p><strong>Otras ciudades o municipios:</strong> Los gastos de envio corren por cuenta del cliente (sujeto a cotizacion).</p></div>';
 }
 function renderFooter(id) {
   const el = $(id);
   if (!el) return;
-  el.innerHTML = `<div class="app-footer">
-    <div class="footer-links">
-      <button class="btn btn-ghost btn-sm" id="wa_${id}"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-      <button class="btn btn-ghost btn-sm" id="sup_${id}"><i class="fas fa-headset"></i> Soporte</button>
-      <button class="btn btn-ghost btn-sm" id="sug_${id}"><i class="fas fa-comment-alt"></i> Sugerencias</button>
-    </div>
-    <span class="footer-copy">© Granja Villa Myriam · Huevos de Codorniz</span>
-  </div>`;
-  $(`wa_${id}`).onclick = () => window.open('https://wa.me/573054126770', '_blank');
-  $(`sup_${id}`).onclick = () => $('supportModal').classList.remove('hidden');
-  $(`sug_${id}`).onclick = () => $('suggestionModal').classList.remove('hidden');
+  el.innerHTML = '<div class="app-footer"><div class="footer-links">' +
+    '<button class="btn btn-ghost btn-sm" id="wa_' + id + '"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
+    '<button class="btn btn-ghost btn-sm" id="sup_' + id + '"><i class="fas fa-headset"></i> Soporte</button>' +
+    '<button class="btn btn-ghost btn-sm" id="sug_' + id + '"><i class="fas fa-comment-alt"></i> Sugerencias</button>' +
+    '</div><span class="footer-copy">Granja Villa Myriam · Huevos de Codorniz</span></div>';
+  $('wa_' + id).onclick = () => window.open('https://wa.me/573054126770', '_blank');
+  $('sup_' + id).onclick = () => $('supportModal').classList.remove('hidden');
+  $('sug_' + id).onclick = () => $('suggestionModal').classList.remove('hidden');
 }
-function getLogoHtml(size = '40px') {
+function getLogoHtml(size) {
+  size = size || '40px';
   const saved = lsGet('granjaLogo');
   if (saved) {
-    return `<img src="${escAttr(saved)}" style="width:${size}; height:${size}; border-radius: 50%; object-fit: cover;" alt="Logo">`;
+    return '<img src="' + escAttr(saved) + '" style="width:' + size + '; height:' + size + '; border-radius: 50%; object-fit: cover;" alt="Logo">';
   } else {
-    return `<span style="font-size:${size}; line-height:1;">🥚</span>`;
+    return '<span style="font-size:' + size + '; line-height:1;">&#x1F95A;</span>';
   }
 }
 
@@ -696,7 +695,7 @@ function initModals() {
       $('suggestionModal').classList.add('hidden');
       $('sugNombre').value = $('sugEmail').value = $('sugMsg').value = '';
       clearMsg('sugErr');
-      alert('¡Gracias por tu sugerencia!');
+      alert('Gracias por tu sugerencia!');
     } catch(e) { showMsg('sugErr', 'Error: ' + e.message, 'error'); }
     finally { $('sendSugBtn').disabled = false; }
   };
@@ -730,7 +729,7 @@ function initModals() {
 }
 
 // =================================================================
-//  RECUPERACIÓN DE CONTRASEÑA
+//  RECUPERACION DE CONTRASENA
 // =================================================================
 function initForgotPassword() {
   const forgotLink = document.getElementById('forgotPasswordLink');
@@ -750,7 +749,7 @@ function initForgotPassword() {
   document.getElementById('sendResetBtn').onclick = async () => {
     const email = document.getElementById('resetEmail').value.trim();
     if (!email) {
-      showMsg('resetMsg', 'Ingresa tu correo electrónico', 'error');
+      showMsg('resetMsg', 'Ingresa tu correo electronico', 'error');
       return;
     }
     const btn = document.getElementById('sendResetBtn');
@@ -760,12 +759,12 @@ function initForgotPassword() {
       const redirectTo = window.location.origin + window.location.pathname;
       const { error } = await window.supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
-      showMsg('resetMsg', '✅ Se han enviado las instrucciones a tu correo. Revisa tu bandeja de entrada.', 'success');
+      showMsg('resetMsg', 'Se han enviado las instrucciones a tu correo. Revisa tu bandeja de entrada.', 'success');
       setTimeout(() => {
         document.getElementById('forgotModal').classList.add('hidden');
       }, 3000);
     } catch (e) {
-      showMsg('resetMsg', '❌ ' + (e.message || 'Error al enviar el correo'), 'error');
+      showMsg('resetMsg', e.message || 'Error al enviar el correo', 'error');
     } finally {
       btn.disabled = false;
       btn.innerHTML = 'Enviar instrucciones';
@@ -775,11 +774,11 @@ function initForgotPassword() {
     const newPass = document.getElementById('newPassword').value;
     const confirmPass = document.getElementById('confirmPassword').value;
     if (!newPass || newPass.length < 6) {
-      showMsg('newPassMsg', 'La contraseña debe tener al menos 6 caracteres', 'error');
+      showMsg('newPassMsg', 'La contrasena debe tener al menos 6 caracteres', 'error');
       return;
     }
     if (newPass !== confirmPass) {
-      showMsg('newPassMsg', 'Las contraseñas no coinciden', 'error');
+      showMsg('newPassMsg', 'Las contrasenas no coinciden', 'error');
       return;
     }
     const btn = document.getElementById('updatePasswordBtn');
@@ -788,15 +787,15 @@ function initForgotPassword() {
     try {
       const { error } = await window.supabase.auth.updateUser({ password: newPass });
       if (error) throw error;
-      showMsg('newPassMsg', '✅ Contraseña actualizada correctamente. Ya puedes iniciar sesión.', 'success');
+      showMsg('newPassMsg', 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.', 'success');
       setTimeout(() => {
         document.getElementById('newPasswordModal').classList.add('hidden');
       }, 2000);
     } catch (e) {
-      showMsg('newPassMsg', '❌ ' + (e.message || 'Error al actualizar la contraseña'), 'error');
+      showMsg('newPassMsg', e.message || 'Error al actualizar la contrasena', 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = 'Actualizar contraseña';
+      btn.innerHTML = 'Actualizar contrasena';
     }
   };
 }
@@ -826,12 +825,12 @@ function initAuthPage() {
     const btn = $('loginBtn');
     const email = $('loginEmail').value.trim();
     const pass = $('loginPass').value;
-    if (!email || !pass) { showMsg('loginErr', 'Ingresa correo y contraseña', 'error'); return; }
-    btn.disabled = true; btn.textContent = 'Ingresando…';
+    if (!email || !pass) { showMsg('loginErr', 'Ingresa correo y contrasena', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Ingresando...';
     try {
       await dbLogin(email, pass);
       location.reload();
-    } catch(e) { showMsg('loginErr', e.message || 'Error al iniciar sesión', 'error'); btn.disabled = false; btn.textContent = 'Ingresar'; }
+    } catch(e) { showMsg('loginErr', e.message || 'Error al iniciar sesion', 'error'); btn.disabled = false; btn.textContent = 'Ingresar'; }
   };
   $('registerBtn').onclick = async () => {
     const btn = $('registerBtn');
@@ -845,12 +844,12 @@ function initAuthPage() {
       whatsapp: $('regWhatsapp').value.trim(),
       tipo: $('regTipo').value,
     };
-    if (!email || !pass || !ud.nombre) { showMsg('registerErr', 'Nombre, correo y contraseña son obligatorios', 'error'); return; }
-    if (pass.length < 6) { showMsg('registerErr', 'La contraseña debe tener al menos 6 caracteres', 'error'); return; }
-    btn.disabled = true; btn.textContent = 'Registrando…';
+    if (!email || !pass || !ud.nombre) { showMsg('registerErr', 'Nombre, correo y contrasena son obligatorios', 'error'); return; }
+    if (pass.length < 6) { showMsg('registerErr', 'La contrasena debe tener al menos 6 caracteres', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Registrando...';
     try {
       await dbRegister(email, pass, ud);
-      showMsg('registerErr', '✅ Cuenta creada. Por favor inicia sesión.', 'success');
+      showMsg('registerErr', 'Cuenta creada. Por favor inicia sesion.', 'success');
       setTimeout(() => tL.click(), 1500);
     } catch(e) { showMsg('registerErr', e.message || 'Error al registrar', 'error'); }
     finally { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
@@ -864,31 +863,26 @@ function initAuthPage() {
 //  CLIENT PAGE
 // =================================================================
 function initClientPage() {
-  $('clientWelcome').textContent = `Hola, ${G.nombre}`;
+  $('clientWelcome').textContent = 'Hola, ' + G.nombre;
   $('clientSub').textContent = G.tipo;
   $('clientLogout').onclick = () => { window.supabase.auth.signOut().then(() => location.reload()); };
   setLogoEl($('clientTopLogo'));
   const nav = $('clientTabNav');
   const main = $('clientMain');
   nav.innerHTML = [
-    { id: 'pedido', label: '🛒 Nuevo pedido' },
-    { id: 'historial', label: '📋 Mis pedidos' }
-  ].map((t,i) => `<button class="tab-btn${i===0?' active':''}" data-ctab="${t.id}">${t.label}</button>`).join('');
-  main.innerHTML = `
-    <div id="ctab-pedido" class="panel active">
-      ${renderShippingCard()}
-      ${buildClientOrderPanel()}
-    </div>
-    <div id="ctab-historial" class="panel">
-      <div class="card"><div class="card-title">📋 Historial de pedidos</div>
-      <div id="clientOrders"><div class="loader"></div></div></div>
-    </div>`;
+    { id: 'pedido', label: 'Nuevo pedido' },
+    { id: 'historial', label: 'Mis pedidos' }
+  ].map((t,i) => '<button class="tab-btn' + (i===0?' active':'') + '" data-ctab="' + t.id + '">' + t.label + '</button>').join('');
+  main.innerHTML =
+    '<div id="ctab-pedido" class="panel active">' + renderShippingCard() + buildClientOrderPanel() + '</div>' +
+    '<div id="ctab-historial" class="panel"><div class="card"><div class="card-title">Historial de pedidos</div>' +
+    '<div id="clientOrders"><div class="loader"></div></div></div></div>';
   nav.querySelectorAll('[data-ctab]').forEach(btn => {
     btn.onclick = () => {
       nav.querySelectorAll('[data-ctab]').forEach(b => b.classList.remove('active'));
       main.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
-      $(`ctab-${btn.dataset.ctab}`).classList.add('active');
+      $('ctab-' + btn.dataset.ctab).classList.add('active');
       if (btn.dataset.ctab === 'historial') loadClientOrders();
     };
   });
@@ -896,35 +890,21 @@ function initClientPage() {
   renderFooter('footerClient');
 }
 function buildClientOrderPanel() {
-  return `
-    <div class="promo-banner"><i class="fas fa-tag"></i> <span id="promoText"></span></div>
-    <div class="grid-2">
-      <div>
-        <div class="card">
-          <div class="card-title">🥚 Seleccionar cubetas</div>
-          <div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="clientCant" min="1" max="500" value="1" style="font-size:1.2rem;text-align:center;"></div>
-          <div class="price-display">
-            <div class="price-big" id="clientPrecio">$4.900</div>
-            <div class="price-label">por cubeta de 24 huevos</div>
-            <div class="price-rule" id="clientPriceRule"></div>
-          </div>
-          <div class="total-bar"><span>Total estimado</span><span class="total-num" id="clientTotal">$4.900</span></div>
-          <button class="btn btn-primary btn-block mt-1" id="addCartBtn"><i class="fas fa-cart-plus"></i> Agregar al carrito</button>
-        </div>
-        <div class="card">
-          <div class="card-title">💳 Método de pago</div>
-          <div class="fg" style="margin-bottom:.75rem"><label>Selecciona cómo pagar</label><select id="payMethod"><option value="efectivo">Efectivo</option><option value="nequi">Nequi</option><option value="pse">PSE / Transferencia</option></select></div>
-          <div class="qr-box hidden" id="qrBox"><i class="fas fa-qrcode"></i><p style="margin-top:.5rem;font-weight:600">Transferir a Nequi / Cuenta bancaria</p><p style="font-size:.9rem;margin-top:.25rem">Número: <strong>305 868 60 94</strong></p><p style="font-size:.8rem;margin-top:.3rem;color:var(--c-muted)">Envía el comprobante por WhatsApp</p></div>
-          <div class="fg" style="margin-top:.75rem"><label>Nota adicional (opcional)</label><textarea id="orderNota" rows="2" placeholder="Dirección de entrega, horario preferido..."></textarea></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">🧺 Carrito <small id="cartCount">0 cubetas</small></div>
-        <div id="cartContent"><div class="cart-empty">${getLogoHtml('50px')}<br>Tu carrito está vacío</div></div>
-        <button class="btn btn-success btn-block mt-2" id="confirmOrderBtn"><i class="fas fa-check-circle"></i> Confirmar pedido</button>
-        <div id="orderMsg" style="margin-top:.5rem"></div>
-      </div>
-    </div>`;
+  return '<div class="promo-banner"><i class="fas fa-tag"></i> <span id="promoText"></span></div>' +
+    '<div class="grid-2"><div>' +
+    '<div class="card"><div class="card-title">Seleccionar cubetas</div>' +
+    '<div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="clientCant" min="1" max="500" value="1" style="font-size:1.2rem;text-align:center;"></div>' +
+    '<div class="price-display"><div class="price-big" id="clientPrecio">$4.900</div><div class="price-label">por cubeta de 24 huevos</div><div class="price-rule" id="clientPriceRule"></div></div>' +
+    '<div class="total-bar"><span>Total estimado</span><span class="total-num" id="clientTotal">$4.900</span></div>' +
+    '<button class="btn btn-primary btn-block mt-1" id="addCartBtn"><i class="fas fa-cart-plus"></i> Agregar al carrito</button></div>' +
+    '<div class="card"><div class="card-title">Metodo de pago</div>' +
+    '<div class="fg" style="margin-bottom:.75rem"><label>Selecciona como pagar</label><select id="payMethod"><option value="efectivo">Efectivo</option><option value="nequi">Nequi</option><option value="pse">PSE / Transferencia</option></select></div>' +
+    '<div class="qr-box hidden" id="qrBox"><i class="fas fa-qrcode"></i><p style="margin-top:.5rem;font-weight:600">Transferir a Nequi / Cuenta bancaria</p><p style="font-size:.9rem;margin-top:.25rem">Numero: <strong>305 868 60 94</strong></p><p style="font-size:.8rem;margin-top:.3rem;color:var(--c-muted)">Envia el comprobante por WhatsApp</p></div>' +
+    '<div class="fg" style="margin-top:.75rem"><label>Nota adicional (opcional)</label><textarea id="orderNota" rows="2" placeholder="Direccion de entrega, horario preferido..."></textarea></div></div></div>' +
+    '<div class="card"><div class="card-title">Carrito <small id="cartCount">0 cubetas</small></div>' +
+    '<div id="cartContent"><div class="cart-empty">' + getLogoHtml('50px') + '<br>Tu carrito esta vacio</div></div>' +
+    '<button class="btn btn-success btn-block mt-2" id="confirmOrderBtn"><i class="fas fa-check-circle"></i> Confirmar pedido</button>' +
+    '<div id="orderMsg" style="margin-top:.5rem"></div></div></div>';
 }
 function initClientOrderPanel() {
   $('promoText').textContent = calcPromoText(G.tipo);
@@ -943,7 +923,7 @@ function updateClientPrice() {
 }
 function addToCart() {
   const cant = parseInt($('clientCant').value);
-  if (!cant || cant < 1 || cant > 500) { showMsg('orderMsg', 'Ingresa una cantidad válida entre 1 y 500', 'warn'); return; }
+  if (!cant || cant < 1 || cant > 500) { showMsg('orderMsg', 'Ingresa una cantidad valida entre 1 y 500', 'warn'); return; }
   const p = calcPrecio(G.tipo, cant);
   G.carrito.push({ cant, precio: p, sub: cant * p });
   $('clientCant').value = 1;
@@ -954,24 +934,26 @@ function addToCart() {
 function renderCart() {
   const cont = $('cartContent');
   if (!G.carrito.length) {
-    cont.innerHTML = `<div class="cart-empty">${getLogoHtml('50px')}<br>Tu carrito está vacío</div>`;
+    cont.innerHTML = '<div class="cart-empty">' + getLogoHtml('50px') + '<br>Tu carrito esta vacio</div>';
     $('cartCount').textContent = '0 cubetas';
     return;
   }
   let total = 0, rows = '';
   G.carrito.forEach((item, i) => {
     total += item.sub;
-    rows += `<div class="cart-row"><div><strong>${item.cant}</strong> cubeta${item.cant>1?'s':''} × ${pesos(item.precio)}</div><div style="display:flex;align-items:center;gap:.4rem"><strong>${pesos(item.sub)}</strong><button class="btn btn-ghost btn-xs" onclick="removeFromCart(${i})" title="Quitar"><i class="fas fa-times"></i></button></div></div>`;
+    rows += '<div class="cart-row"><div><strong>' + item.cant + '</strong> cubeta' + (item.cant>1?'s':'') + ' x ' + pesos(item.precio) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:.4rem"><strong>' + pesos(item.sub) + '</strong>' +
+      '<button class="btn btn-ghost btn-xs" onclick="removeFromCart(' + i + ')" title="Quitar"><i class="fas fa-times"></i></button></div></div>';
   });
-  cont.innerHTML = rows + `<div class="cart-total"><span>Total</span><span style="font-family:var(--font-head);font-size:1.2rem">${pesos(total)}</span></div>`;
+  cont.innerHTML = rows + '<div class="cart-total"><span>Total</span><span style="font-family:var(--font-head);font-size:1.2rem">' + pesos(total) + '</span></div>';
   const tc = G.carrito.reduce((s,i) => s + i.cant, 0);
-  $('cartCount').textContent = `${tc} cubeta${tc>1?'s':''}`;
+  $('cartCount').textContent = tc + ' cubeta' + (tc>1?'s':'');
 }
 window.removeFromCart = i => { G.carrito.splice(i,1); renderCart(); };
 async function confirmOrder() {
   if (!G.carrito.length) { showMsg('orderMsg', 'Agrega al menos un item al carrito', 'warn'); return; }
   const btn = $('confirmOrderBtn');
-  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando…';
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
   clearMsg('orderMsg');
   try {
     const total = G.carrito.reduce((s,i) => s + i.sub, 0);
@@ -993,19 +975,19 @@ async function confirmOrder() {
         G.carrito = [];
         $('orderNota').value = '';
         renderCart();
-        showMsg('orderMsg', `✅ Pedido <strong>${num}</strong> confirmado. ¡Gracias!`, 'success');
+        showMsg('orderMsg', 'Pedido <strong>' + num + '</strong> confirmado. Gracias!', 'success');
         setTimeout(() => clearMsg('orderMsg'), 8000);
       } catch(e) {
         if (e.message && e.message.includes('duplicate key')) {
           attempts++;
-          if (attempts >= MAX_ATTEMPTS) throw new Error('No se pudo generar un número de factura único. Por favor reintenta.');
+          if (attempts >= MAX_ATTEMPTS) throw new Error('No se pudo generar un numero de factura unico. Por favor reintenta.');
           await new Promise(r => setTimeout(r, 100));
         } else {
           throw e;
         }
       }
     }
-  } catch(e) { showMsg('orderMsg', '❌ ' + (e.message || 'Error al confirmar'), 'error'); }
+  } catch(e) { showMsg('orderMsg', e.message || 'Error al confirmar', 'error'); }
   finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar pedido'; }
 }
 async function loadClientOrders() {
@@ -1014,12 +996,12 @@ async function loadClientOrders() {
   cont.innerHTML = '<div class="loader"></div>';
   try {
     const pedidos = await dbPedidosUser(G.userId);
-    if (!pedidos.length) { cont.innerHTML = `<div class="cart-empty" style="padding:2rem">${getLogoHtml('60px')}<br>Aún no tienes pedidos</div>`; return; }
+    if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem">' + getLogoHtml('60px') + '<br>Aun no tienes pedidos</div>'; return; }
     const ahora = new Date();
     const hayEntregados = pedidos.some(p => p.status === 'Entregado');
     let notifHtml = '';
     if (hayEntregados) {
-      notifHtml = `<div class="notification-banner"><i class="fas fa-truck"></i> <span>⚠️ Tienes pedidos entregados pendientes de pago. Por favor, realiza el pago lo antes posible.</span></div>`;
+      notifHtml = '<div class="notification-banner"><i class="fas fa-truck"></i> <span>Tienes pedidos entregados pendientes de pago. Por favor, realiza el pago lo antes posible.</span></div>';
     }
     cont.innerHTML = notifHtml + pedidos.map(p => {
       const fechaPedido = new Date(p.fecha);
@@ -1030,26 +1012,23 @@ async function loadClientOrders() {
       else if (p.status === 'Entregado') { badgeClass = 'badge-pending'; badgeText = 'Entregado - Pago pendiente'; }
       else if (p.status === 'Pagado') { badgeClass = 'badge-pagado'; badgeText = 'Pagado'; }
       else if (p.status === 'Cancelado') { badgeClass = 'badge-canceled'; badgeText = 'Cancelado'; }
-      return `
-      <div class="order-card">
-        <div class="order-meta">
-          <div><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${badgeClass}" style="margin-left:.5rem">${badgeText}</span></div>
-          <span class="order-date">${fmtDate(p.fecha)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;flex-wrap:wrap;gap:.35rem">
-          <span style="color:var(--c-muted);font-size:.9rem">${p.payment_method || ''} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas</span>
-          <span class="order-total">${pesos(p.total)}</span>
-        </div>
-        ${p.nota ? `<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;font-style:italic">📝 ${escAttr(p.nota)}</div>` : ''}
-        <div style="margin-top:.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">
-          ${p.status === 'Pendiente' && puedeCancelar ? `<button class="btn btn-danger btn-sm" onclick="clienteCancelarPedido('${p.id}')">Cancelar pedido</button>` : ''}
-          <button class="btn btn-outline btn-sm" onclick="showClientInvoice(${p.id})"><i class="fas fa-file-invoice"></i> Ver factura</button>
-        </div>
-      </div>`}).join('');
-  } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error al cargar pedidos: ${escHtml(e.message)}</div>`; }
+      return '<div class="order-card"><div class="order-meta">' +
+        '<div><span class="order-num">' + escAttr(p.invoice_number) + '</span>' +
+        '<span class="badge ' + badgeClass + '" style="margin-left:.5rem">' + badgeText + '</span></div>' +
+        '<span class="order-date">' + fmtDate(p.fecha) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;flex-wrap:wrap;gap:.35rem">' +
+        '<span style="color:var(--c-muted);font-size:.9rem">' + (p.payment_method || '') + ' - ' + (p.items||[]).reduce((s,i)=>s+i.cant,0) + ' cubetas</span>' +
+        '<span class="order-total">' + pesos(p.total) + '</span></div>' +
+        (p.nota ? '<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;font-style:italic">' + escAttr(p.nota) + '</div>' : '') +
+        '<div style="margin-top:.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">' +
+        (p.status === 'Pendiente' && puedeCancelar ? '<button class="btn btn-danger btn-sm" onclick="clienteCancelarPedido(\'' + p.id + '\')">Cancelar pedido</button>' : '') +
+        '<button class="btn btn-outline btn-sm" onclick="showClientInvoice(' + p.id + ')"><i class="fas fa-file-invoice"></i> Ver factura</button>' +
+        '</div></div>';
+    }).join('');
+  } catch(e) { cont.innerHTML = '<div class="alert alert-error">Error al cargar pedidos: ' + escHtml(e.message) + '</div>'; }
 }
 window.clienteCancelarPedido = async (id) => {
-  if (confirm('¿Cancelar este pedido? Solo puedes cancelar dentro de los 30 minutos posteriores a la creación.')) {
+  if (confirm('Cancelar este pedido? Solo puedes cancelar dentro de los 30 minutos posteriores a la creacion.')) {
     await dbUpdatePedido(id, { status: 'Cancelado' });
     await loadClientOrders();
   }
@@ -1064,18 +1043,24 @@ window.showClientInvoice = async (pedidoId) => {
   else if (p.status === 'Entregado') badgeEstado = 'badge-pending';
   else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
   else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
-  $('invoiceContent').innerHTML = `
-    <div style="font-family:var(--fb)">
-      <div class="invoice-header">
-        <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7 · Venta huevos de codorniz</div></div>
-        <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${badgeEstado}">${p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status}</span></div></div>
-      </div>
-      <div class="invoice-section"><h4>Cliente</h4><p><strong>${usuario?.nombre || G.nombre}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
-      ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
-      <div class="invoice-total">Total: ${pesos(p.total)}</div>
-      <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
-    </div>`;
+  $('invoiceContent').innerHTML =
+    '<div><div class="invoice-header">' +
+    '<div><div class="invoice-brand">Granja Villa Myriam / Emelina</div>' +
+    '<div style="font-size:.8rem;color:var(--c-muted)">NIT: 900.123.456-7 - Venta huevos de codorniz</div></div>' +
+    '<div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">' + escAttr(p.invoice_number) + '</div>' +
+    '<div>' + fmtDate(p.fecha) + '</div><div>' + p.payment_method + '</div>' +
+    '<div><span class="badge ' + badgeEstado + '">' + (p.status === 'Entregado' ? 'Entregado - Pago pendiente' : p.status) + '</span></div></div></div>' +
+    '<div class="invoice-section"><h4>Cliente</h4><p><strong>' + (usuario ? escHtml(usuario.nombre) : G.nombre) + '</strong><br>' +
+    (usuario && usuario.direccion ? 'Direccion: ' + escHtml(usuario.direccion) + '<br>' : '') +
+    'Telefono: ' + (usuario && usuario.telefono ? escHtml(usuario.telefono) : 'No registrado') + '<br>' +
+    'WhatsApp: ' + (usuario && usuario.whatsapp ? escHtml(usuario.whatsapp) : (usuario && usuario.telefono ? escHtml(usuario.telefono) : 'No registrado')) + '</p></div>' +
+    '<div class="invoice-section"><h4>Detalle del pedido</h4>' +
+    '<table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>' +
+    (p.items||[]).map(i => '<tr><td>Cubeta 24 huevos codorniz</td><td>' + i.cant + '</td><td>' + pesos(i.precio) + '</td><td>' + pesos(i.sub) + '</td></tr>').join('') +
+    '</tbody></table></div>' +
+    (p.nota ? '<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ' + escHtml(p.nota) + '</p>' : '') +
+    '<div class="invoice-total">Total: ' + pesos(p.total) + '</div>' +
+    '<div class="invoice-footer">Producto exento de IVA - Art. 424 E.T. - Gracias por su compra!</div></div>';
   $('invoiceModal').classList.remove('hidden');
 };
 
@@ -1089,24 +1074,24 @@ async function initAdminPage() {
   $('adminTopLogo').onclick = () => $('logoFileInput').click();
   setLogoEl($('adminTopLogo'));
   let tabs = [
-    { id: 'ventas', label: '📊 Ventas' },
-    { id: 'pedidos', label: '📦 Pedidos' },
-    { id: 'inventario', label: '📦 Inventario' },
-    { id: 'usuarios', label: '👥 Usuarios' },
-    { id: 'sugerencias', label: '💬 Sugerencias' },
-    { id: 'respaldo', label: '💾 Respaldo' }
+    { id: 'ventas',      label: 'Ventas' },
+    { id: 'pedidos',     label: 'Pedidos' },
+    { id: 'inventario',  label: 'Inventario' },
+    { id: 'usuarios',    label: 'Usuarios' },
+    { id: 'sugerencias', label: 'Sugerencias' },
+    { id: 'respaldo',    label: 'Respaldo' }
   ];
-  if (G.esAdmin) tabs.push({ id: 'admins', label: '👑 Super Admin' });
+  if (G.esAdmin) tabs.push({ id: 'admins', label: 'Super Admin' });
   const nav = $('adminTabNav');
   const main = $('adminMain');
-  nav.innerHTML = tabs.map((t,i) => `<button class="tab-btn${i===0?' active':''}" data-atab="${t.id}">${t.label}</button>`).join('');
-  main.innerHTML = tabs.map(t => `<div id="atab-${t.id}" class="panel${t.id==='ventas'?' active':''}"></div>`).join('');
+  nav.innerHTML = tabs.map((t,i) => '<button class="tab-btn' + (i===0?' active':'') + '" data-atab="' + t.id + '">' + t.label + '</button>').join('');
+  main.innerHTML = tabs.map(t => '<div id="atab-' + t.id + '" class="panel' + (t.id==='ventas'?' active':'') + '"></div>').join('');
   nav.querySelectorAll('[data-atab]').forEach(btn => {
     btn.onclick = async () => {
       nav.querySelectorAll('[data-atab]').forEach(b => b.classList.remove('active'));
       main.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
-      $(`atab-${btn.dataset.atab}`).classList.add('active');
+      $('atab-' + btn.dataset.atab).classList.add('active');
       await renderAdminTab(btn.dataset.atab);
     };
   });
@@ -1114,21 +1099,21 @@ async function initAdminPage() {
   renderFooter('footerAdmin');
 }
 async function renderAdminTab(tab) {
-  const cont = $(`atab-${tab}`);
+  const cont = $('atab-' + tab);
   if (!cont) return;
-  if (tab === 'ventas') await renderAdminVentas(cont);
-  if (tab === 'pedidos') await renderAdminPedidos(cont);
-  if (tab === 'inventario') await renderAdminInventario(cont);
-  if (tab === 'usuarios') await renderAdminUsuarios(cont);
+  if (tab === 'ventas')      await renderAdminVentas(cont);
+  if (tab === 'pedidos')     await renderAdminPedidos(cont);
+  if (tab === 'inventario')  await renderAdminInventario(cont);
+  if (tab === 'usuarios')    await renderAdminUsuarios(cont);
   if (tab === 'sugerencias') await renderAdminSugerencias(cont);
-  if (tab === 'respaldo') renderAdminRespaldo(cont);
-  if (tab === 'admins') await renderAdminAdmins(cont);
+  if (tab === 'respaldo')    renderAdminRespaldo(cont);
+  if (tab === 'admins')      await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS con notificaciones ==========
+// ========== VENTAS ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const { data: ventas, error: errV } = await supabase.from('ventas_directas').select('*').order('fecha', { ascending: false });
     const { data: pedidos, error: errP } = await supabase.from('pedidos').select('*').order('fecha', { ascending: false });
@@ -1137,12 +1122,12 @@ async function renderAdminVentas(cont) {
     G.ventasAll = ventas || [];
     G.pedidosAll = pedidos || [];
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error al cargar datos: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error al cargar datos: ' + e.message + '</div>';
     return;
   }
   const lastCheck = lsGet('adminLastCheck');
-  const newOrders = G.pedidosAll.filter(p => 
-    p.status === 'Pendiente' && 
+  const newOrders = G.pedidosAll.filter(p =>
+    p.status === 'Pendiente' &&
     (!lastCheck || new Date(p.fecha) > new Date(lastCheck))
   );
   const newOrdersCount = newOrders.length;
@@ -1153,52 +1138,46 @@ async function renderAdminVentas(cont) {
   const falta = Math.max(0, G.META - total);
   let notifHtml = '';
   if (newOrdersCount > 0) {
-    notifHtml = `
-      <div class="card new-orders-card" id="newOrdersNotification">
-        <div class="card-title">🔔 Nuevos pedidos <span style="background:var(--c-red); color:white; border-radius:20px; padding:0 8px;">${newOrdersCount}</span></div>
-        <p>Haz clic para ver los pedidos recientes pendientes.</p>
-      </div>`;
+    notifHtml = '<div class="card new-orders-card" id="newOrdersNotification">' +
+      '<div class="card-title">Nuevos pedidos <span style="background:var(--c-red);color:white;border-radius:20px;padding:0 8px;">' + newOrdersCount + '</span></div>' +
+      '<p>Haz clic para ver los pedidos recientes pendientes.</p></div>';
   }
-  cont.innerHTML = notifHtml + `
-    <div class="meta-hero">
-      <div class="meta-label">Meta de ganancias</div>
-      <div class="meta-goal">${pesos(G.META)}</div>
-      <div class="meta-progress"><div class="meta-fill" style="width:${pct}%"></div></div>
-      <div class="meta-row">
-        <div><div class="meta-pct">${Math.floor(pct)}%</div><div>Acumulado: ${pesos(total)}</div><div>Faltante: ${pesos(falta)}</div></div>
-        <div class="meta-figure">🥚</div>
-      </div>
-    </div>
-    <div class="grid-4" style="margin-bottom:1.25rem">
-      <div class="stat-card"><div class="stat-val">${pesos(totalVentasPagadas)}</div><div class="stat-label">Ventas directas (pagadas)</div></div>
-      <div class="stat-card"><div class="stat-val">${pesos(totalPedidosPagados)}</div><div class="stat-label">Pedidos app (pagados)</div></div>
-      <div class="stat-card"><div class="stat-val">${G.ventasAll.length + G.pedidosAll.length}</div><div class="stat-label">Total transacciones</div></div>
-      <div class="stat-card"><div class="stat-val">${Math.floor(pct)}%</div><div class="stat-label">% de meta</div></div>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">➕ Registrar venta directa</div>
-        <div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="vCant" min="1" max="500" value="1"></div>
-        <div class="price-display">
-          <div class="price-big" id="vPrecioPreview">$4.900</div>
-          <div class="price-label" id="vTipoPreview">Tipo automático</div>
-        </div>
-        <div class="fg"><label>Forzar tipo (opcional)</label>
-          <select id="vTipoSelect"><option value="">Automático</option><option value="bodega">Bodega</option><option value="restaurante">Restaurante</option><option value="comida_rapida">Comida rápida</option></select>
-        </div>
-        <div class="total-bar">Total: <span id="vTotalPreview">$4.900</span></div>
-        <button class="btn btn-primary btn-block" id="btnRegistrarVenta">Registrar venta</button>
-        <div id="vMsg"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">📈 Últimos pedidos</div>
-        <div id="ultimosPedidosList"></div>
-        <button class="btn btn-ghost btn-sm" id="exportPedidosBtn">CSV pedidos</button>
-        <button class="btn btn-ghost btn-sm" id="exportVentasBtn">CSV ventas</button>
-      </div>
-    </div>
-    <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>
-    <div class="card"><div class="card-title">📈 Pedidos app por día</div><canvas id="chartPed" height="100"></canvas></div>`;
+  cont.innerHTML = notifHtml +
+    '<div class="meta-hero">' +
+      '<div class="meta-label">Meta de ganancias</div>' +
+      '<div class="meta-goal">' + pesos(G.META) + '</div>' +
+      '<div class="meta-progress"><div class="meta-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="meta-row"><div>' +
+        '<div class="meta-pct">' + Math.floor(pct) + '%</div>' +
+        '<div>Acumulado: ' + pesos(total) + '</div>' +
+        '<div>Faltante: ' + pesos(falta) + '</div>' +
+      '</div><div class="meta-figure">&#x1F95A;</div></div>' +
+    '</div>' +
+    '<div class="grid-4" style="margin-bottom:1.25rem">' +
+      '<div class="stat-card"><div class="stat-val">' + pesos(totalVentasPagadas) + '</div><div class="stat-label">Ventas directas (pagadas)</div></div>' +
+      '<div class="stat-card"><div class="stat-val">' + pesos(totalPedidosPagados) + '</div><div class="stat-label">Pedidos app (pagados)</div></div>' +
+      '<div class="stat-card"><div class="stat-val">' + (G.ventasAll.length + G.pedidosAll.length) + '</div><div class="stat-label">Total transacciones</div></div>' +
+      '<div class="stat-card"><div class="stat-val">' + Math.floor(pct) + '%</div><div class="stat-label">% de meta</div></div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div class="card"><div class="card-title">Registrar venta directa</div>' +
+        '<div class="fg"><label>Cantidad de cubetas (1-500)</label><input type="number" id="vCant" min="1" max="500" value="1"></div>' +
+        '<div class="price-display"><div class="price-big" id="vPrecioPreview">$4.900</div><div class="price-label" id="vTipoPreview">Tipo automatico</div></div>' +
+        '<div class="fg"><label>Forzar tipo (opcional)</label>' +
+          '<select id="vTipoSelect"><option value="">Automatico</option><option value="bodega">Bodega</option><option value="restaurante">Restaurante</option><option value="comida_rapida">Comida rapida</option></select>' +
+        '</div>' +
+        '<div class="total-bar">Total: <span id="vTotalPreview">$4.900</span></div>' +
+        '<button class="btn btn-primary btn-block" id="btnRegistrarVenta">Registrar venta</button>' +
+        '<div id="vMsg"></div>' +
+      '</div>' +
+      '<div class="card"><div class="card-title">Ultimos pedidos</div>' +
+        '<div id="ultimosPedidosList"></div>' +
+        '<button class="btn btn-ghost btn-sm" id="exportPedidosBtn">CSV pedidos</button>' +
+        '<button class="btn btn-ghost btn-sm" id="exportVentasBtn">CSV ventas</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card"><div class="card-title">Ventas directas por dia</div><canvas id="chartDir" height="100"></canvas></div>' +
+    '<div class="card"><div class="card-title">Pedidos app por dia</div><canvas id="chartPed" height="100"></canvas></div>';
 
   requestAnimationFrame(() => {
     const notifCard = document.getElementById('newOrdersNotification');
@@ -1207,30 +1186,27 @@ async function renderAdminVentas(cont) {
         const ordersWithUser = [];
         for (const order of newOrders) {
           const { data: usuario } = await supabase.from('usuarios').select('nombre, telefono, whatsapp, direccion').eq('user_id', order.user_id).single();
-          ordersWithUser.push({ ...order, usuario });
+          ordersWithUser.push(Object.assign({}, order, { usuario }));
         }
         const modal = document.getElementById('newOrdersModal');
         const listContainer = document.getElementById('newOrdersList');
-        listContainer.innerHTML = ordersWithUser.map(o => `
-          <div class="order-card" style="margin-bottom:1rem;">
-            <div class="order-meta">
-              <span class="order-num">${o.invoice_number}</span>
-              <span class="order-date">${fmtDate(o.fecha)}</span>
-              <span class="order-total">${pesos(o.total)}</span>
-            </div>
-            <div class="order-contact-info">
-              <div><strong>Cliente:</strong> ${o.usuario?.nombre || 'N/A'}</div>
-              <div><strong>Teléfono:</strong> ${o.usuario?.telefono || 'No registrado'}</div>
-              <div><strong>WhatsApp:</strong> ${o.usuario?.whatsapp || (o.usuario?.telefono || 'No registrado')}</div>
-              <div><strong>Dirección:</strong> ${o.usuario?.direccion || 'No especificada'}</div>
-              ${o.nota ? `<div><strong>Nota:</strong> ${o.nota}</div>` : ''}
-            </div>
-            <div style="margin-top:8px">
-              <button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${o.id}')">Marcar Pagado</button>
-              <button class="btn btn-danger btn-sm" onclick="cancelarPedido('${o.id}')">Cancelar</button>
-            </div>
-          </div>
-        `).join('');
+        listContainer.innerHTML = ordersWithUser.map(o =>
+          '<div class="order-card" style="margin-bottom:1rem;">' +
+          '<div class="order-meta"><span class="order-num">' + escAttr(o.invoice_number) + '</span>' +
+          '<span class="order-date">' + fmtDate(o.fecha) + '</span>' +
+          '<span class="order-total">' + pesos(o.total) + '</span></div>' +
+          '<div class="order-contact-info">' +
+          '<div><strong>Cliente:</strong> ' + (o.usuario ? escHtml(o.usuario.nombre) : 'N/A') + '</div>' +
+          '<div><strong>Telefono:</strong> ' + (o.usuario && o.usuario.telefono ? escHtml(o.usuario.telefono) : 'No registrado') + '</div>' +
+          '<div><strong>WhatsApp:</strong> ' + (o.usuario && o.usuario.whatsapp ? escHtml(o.usuario.whatsapp) : (o.usuario && o.usuario.telefono ? escHtml(o.usuario.telefono) : 'No registrado')) + '</div>' +
+          '<div><strong>Direccion:</strong> ' + (o.usuario && o.usuario.direccion ? escHtml(o.usuario.direccion) : 'No especificada') + '</div>' +
+          (o.nota ? '<div><strong>Nota:</strong> ' + escHtml(o.nota) + '</div>' : '') +
+          '</div>' +
+          '<div style="margin-top:8px">' +
+          '<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido(\'' + o.id + '\')">Marcar Pagado</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="cancelarPedido(\'' + o.id + '\')">Cancelar</button>' +
+          '</div></div>'
+        ).join('');
         modal.classList.remove('hidden');
       };
     }
@@ -1243,12 +1219,12 @@ async function renderAdminVentas(cont) {
       let precio = 0, tipoTexto = '';
       if (tipoForzado === 'bodega') { precio = 4300; tipoTexto = 'Bodega (forzado)'; }
       else if (tipoForzado === 'restaurante') { precio = 4300; tipoTexto = 'Restaurante (forzado)'; }
-      else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoTexto = 'Comida rápida (forzado)'; }
+      else if (tipoForzado === 'comida_rapida') { precio = 4300; tipoTexto = 'Comida rapida (forzado)'; }
       else {
-        if (cant >= 50) { precio = 4300; tipoTexto = 'Mayorista (≥50)'; }
+        if (cant >= 50) { precio = 4300; tipoTexto = 'Mayorista (>=50)'; }
         else if (cant >= 20) { precio = 4500; tipoTexto = 'Bodega (20-49)'; }
         else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
-        else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
+        else { precio = 4900; tipoTexto = 'Estandar (<10)'; }
       }
       $('vPrecioPreview').textContent = pesos(precio);
       $('vTipoPreview').textContent = tipoTexto;
@@ -1259,66 +1235,63 @@ async function renderAdminVentas(cont) {
     updatePreview();
     $('btnRegistrarVenta').onclick = async () => {
       const cant = parseInt(vCant.value);
-      if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
+      if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad invalida', 'error'); return; }
       let tipoForzado = vTipoSelect.value;
       let precio = 0, nombre = '';
       if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
       else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
-      else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
+      else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rapida'; }
       else {
         if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
         else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
         else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
-        else { precio = 4900; nombre = 'Estándar'; }
+        else { precio = 4900; nombre = 'Estandar'; }
       }
       try {
         const invoice = genInvoiceNumber('VD');
         await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString(), status: 'Pendiente', invoice_number: invoice });
-        showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}. Factura: ${invoice}`, 'success');
+        showMsg('vMsg', 'Venta registrada: ' + cant + ' cubetas - ' + pesos(cant*precio) + '. Factura: ' + invoice, 'success');
         vCant.value = 1;
         updatePreview();
         await renderAdminTab('ventas');
         await renderAdminTab('pedidos');
         await renderAdminTab('inventario');
-      } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
+      } catch(e) { showMsg('vMsg', e.message, 'error'); }
     };
     const lista = $('ultimosPedidosList');
     if (lista) {
-      if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
-      else {
+      if (!G.pedidosAll.length) {
+        lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
+      } else {
         lista.innerHTML = G.pedidosAll.slice(0,10).map(p => {
           let badgeEstado = '';
           if (p.status === 'Pendiente') badgeEstado = 'badge-pending';
           else if (p.status === 'Pagado') badgeEstado = 'badge-pagado';
           else if (p.status === 'Cancelado') badgeEstado = 'badge-canceled';
           else badgeEstado = 'badge-pending';
-          return `
-          <div class="order-card">
-            <div class="order-meta">
-              <span class="order-num">${p.invoice_number}</span>
-              <span class="badge ${badgeEstado}">${p.status}</span>
-              <span class="order-total">${pesos(p.total)}</span>
-            </div>
-            <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
-            <div class="order-note">${p.nota ? `📝 ${p.nota}` : ''}</div>
-            <div style="margin-top:8px">
-              ${p.status === 'Pendiente' ? `<button class="btn btn-info btn-sm" onclick="marcarEntregado('${p.id}')">Marcar Entregado</button>` : ''}
-              ${(p.status === 'Pendiente' || p.status === 'Entregado') ? `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${p.id}')">Marcar Pagado</button>` : ''}
-              ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${p.id}')">Cancelar</button>` : ''}
-            </div>
-          </div>
-        `}).join('');
+          return '<div class="order-card">' +
+            '<div class="order-meta"><span class="order-num">' + escAttr(p.invoice_number) + '</span>' +
+            '<span class="badge ' + badgeEstado + '">' + p.status + '</span>' +
+            '<span class="order-total">' + pesos(p.total) + '</span></div>' +
+            '<div class="order-date">' + fmtDate(p.fecha) + ' - ' + p.payment_method + '</div>' +
+            (p.nota ? '<div>' + escAttr(p.nota) + '</div>' : '') +
+            '<div style="margin-top:8px">' +
+            (p.status === 'Pendiente' ? '<button class="btn btn-info btn-sm" onclick="marcarEntregado(\'' + p.id + '\')">Marcar Entregado</button>' : '') +
+            ((p.status === 'Pendiente' || p.status === 'Entregado') ? '<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido(\'' + p.id + '\')">Marcar Pagado</button>' : '') +
+            (p.status === 'Pendiente' ? '<button class="btn btn-danger btn-sm" onclick="cancelarPedido(\'' + p.id + '\')">Cancelar</button>' : '') +
+            '</div></div>';
+        }).join('');
       }
     }
     $('exportPedidosBtn').onclick = () => {
       let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
-      G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+      G.pedidosAll.forEach(p => { csv += '"' + p.invoice_number + '","' + fmtDate(p.fecha) + '",' + p.total + ',"' + p.status + '","' + p.payment_method + '","' + (p.items||[]).reduce((s,i)=>s+i.cant,0) + '","' + (p.nota||'') + '"\n'; });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'pedidos_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
     };
     $('exportVentasBtn').onclick = () => {
       let csv = 'Factura,Fecha,Tipo,Cantidad,Precio Unitario,Total,Estado,Nota\n';
-      G.ventasAll.forEach(v => csv += `"${v.invoice_number || 'N/A'}","${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+      G.ventasAll.forEach(v => { csv += '"' + (v.invoice_number || 'N/A') + '","' + fmtDate(v.fecha) + '","' + v.tipo_nombre + '",' + v.cant + ',' + v.precio_unitario + ',' + v.total + ',"' + v.status + '","' + (v.nota||'') + '"\n'; });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'ventas_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
     };
     renderChartDir();
     renderChartPed();
@@ -1334,7 +1307,7 @@ window.marcarPagadoPedido = async (id) => {
   if (pedido) {
     const cantidad = (pedido.items || []).reduce((s,i) => s + i.cant, 0);
     try {
-      await updateStock(-cantidad, `Pago de pedido ${pedido.invoice_number}`, 'venta');
+      await updateStock(-cantidad, 'Pago de pedido ' + pedido.invoice_number, 'venta');
       await dbUpdatePedido(id, { status: 'Pagado' });
       alert('Pedido marcado como pagado. Stock actualizado.');
     } catch(e) { alert('Error al actualizar stock: ' + e.message); }
@@ -1344,7 +1317,7 @@ window.marcarPagadoPedido = async (id) => {
   await renderAdminTab('inventario');
 };
 window.cancelarPedido = async (id) => {
-  if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
+  if (confirm('Cancelar este pedido? Esta accion no se puede deshacer.')) {
     await dbUpdatePedido(id, { status: 'Cancelado' });
     await renderAdminTab('ventas');
     await renderAdminTab('pedidos');
@@ -1354,7 +1327,7 @@ window.marcarPagadoVenta = async (id) => {
   const venta = G.ventasAll.find(v => v.id == id);
   if (venta) {
     try {
-      await updateStock(-venta.cant, `Pago de venta directa ${venta.invoice_number || 'sin factura'}`, 'venta');
+      await updateStock(-venta.cant, 'Pago de venta directa ' + (venta.invoice_number || 'sin factura'), 'venta');
       await dbUpdateVenta(id, { status: 'Pagado' });
       alert('Venta directa marcada como pagada. Stock actualizado.');
     } catch(e) { alert('Error al actualizar stock: ' + e.message); }
@@ -1364,7 +1337,7 @@ window.marcarPagadoVenta = async (id) => {
   await renderAdminTab('inventario');
 };
 window.cancelarVenta = async (id) => {
-  if (confirm('¿Cancelar esta venta directa? Esta acción no se puede deshacer.')) {
+  if (confirm('Cancelar esta venta directa? Esta accion no se puede deshacer.')) {
     await dbUpdateVenta(id, { status: 'Cancelado' });
     await renderAdminTab('ventas');
     await renderAdminTab('pedidos');
@@ -1399,9 +1372,9 @@ function renderChartPed() {
   });
 }
 
-// ========== PEDIDOS (CORREGIDO: sin error de sintaxis) ==========
+// ========== PEDIDOS (CORREGIDO - verFactura sin sintaxis rota) ==========
 async function renderAdminPedidos(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const pedidos = await dbAllPedidos();
     const ventas = await dbAllVentas();
@@ -1409,29 +1382,28 @@ async function renderAdminPedidos(cont) {
     pedidos.forEach(p => {
       items.push({
         id: p.id, tipo: 'pedido', invoice: p.invoice_number, fecha: p.fecha, total: p.total,
-        status: p.status, detalle: `${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${p.payment_method || 'N/E'}`,
+        status: p.status, detalle: (p.items||[]).reduce((s,i)=>s+i.cant,0) + ' cubetas - ' + (p.payment_method || 'N/E'),
         nota: p.nota, user_id: p.user_id, cantidad_total: (p.items||[]).reduce((s,i)=>s+i.cant,0)
       });
     });
     ventas.forEach(v => {
       items.push({
         id: v.id, tipo: 'venta_directa', invoice: v.invoice_number || 'Sin factura', fecha: v.fecha, total: v.total,
-        status: v.status || 'Pendiente', detalle: `${v.cant} cubetas · ${v.tipo_nombre || 'Venta directa'}`,
+        status: v.status || 'Pendiente', detalle: v.cant + ' cubetas - ' + (v.tipo_nombre || 'Venta directa'),
         nota: v.nota || '', user_id: v.user_id, cantidad_total: v.cant
       });
     });
     items.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-    let html = `<div class="card"><div class="card-title">📦 Todas las transacciones (pedidos + ventas directas)</div>
-      <div class="filter-bar" id="pedFilterBarAdmin">
-        <button class="chip active" data-status="todos">Todos</button>
-        <button class="chip" data-status="Pendiente">Pendientes</button>
-        <button class="chip" data-status="Pagado">Pagados</button>
-        <button class="chip" data-status="Cancelado">Cancelados</button>
-      </div>
-      <div id="adminPedidosList"></div>
-    </div>
-    <div class="card"><div class="card-title">📊 Transacciones por día (pagadas)</div><canvas id="transChart" height="100"></canvas></div>`;
-    cont.innerHTML = html;
+    cont.innerHTML =
+      '<div class="card"><div class="card-title">Todas las transacciones (pedidos + ventas directas)</div>' +
+      '<div class="filter-bar" id="pedFilterBarAdmin">' +
+        '<button class="chip active" data-status="todos">Todos</button>' +
+        '<button class="chip" data-status="Pendiente">Pendientes</button>' +
+        '<button class="chip" data-status="Pagado">Pagados</button>' +
+        '<button class="chip" data-status="Cancelado">Cancelados</button>' +
+      '</div><div id="adminPedidosList"></div></div>' +
+      '<div class="card"><div class="card-title">Transacciones por dia (pagadas)</div><canvas id="transChart" height="100"></canvas></div>';
+
     const renderList = (status) => {
       const list = status === 'todos' ? items : items.filter(i => i.status === status);
       const container = $('adminPedidosList');
@@ -1443,37 +1415,27 @@ async function renderAdminPedidos(cont) {
         else if (item.status === 'Pagado') badgeClass = 'badge-pagado';
         else if (item.status === 'Cancelado') badgeClass = 'badge-canceled';
         else badgeClass = 'badge-pending';
-        const tipoLabel = item.tipo === 'pedido' ? '📱 Pedido cliente' : '💰 Venta directa';
-        let botones = '';
-        if (item.status === 'Pendiente' || item.status === 'Entregado') {
-          if (item.tipo === 'pedido') {
-            botones += `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${item.id}')">Pagar</button>`;
-          } else {
-            botones += `<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta('${item.id}')">Pagar</button>`;
-          }
-        }
-        if (item.status === 'Pendiente') {
-          if (item.tipo === 'pedido') {
-            botones += `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${item.id}')">Cancelar</button>`;
-          } else {
-            botones += `<button class="btn btn-danger btn-sm" onclick="cancelarVenta('${item.id}')">Cancelar</button>`;
-          }
-        }
-        botones += `<button class="btn btn-outline btn-sm" onclick="verFactura('${item.tipo}', '${item.id}')">Factura</button>`;
-        return `
-        <div class="order-card">
-          <div class="order-meta">
-            <div><span class="order-num">${tipoLabel} · ${item.invoice}</span> <span class="badge ${badgeClass}">${item.status}</span></div>
-            <span class="order-date">${fmtDate(item.fecha)}</span>
-          </div>
-          <div>${item.detalle} · ${pesos(item.total)}</div>
-          ${item.nota ? `<div class="muted">📝 ${item.nota}</div>` : ''}
-          <div style="margin-top:8px">
-            ${botones}
-          </div>
-        </div>
-      `}).join('');
+        const tipoLabel = item.tipo === 'pedido' ? 'Pedido cliente' : 'Venta directa';
+        return '<div class="order-card">' +
+          '<div class="order-meta"><div><span class="order-num">' + tipoLabel + ' - ' + escAttr(item.invoice) + '</span> ' +
+          '<span class="badge ' + badgeClass + '">' + item.status + '</span></div>' +
+          '<span class="order-date">' + fmtDate(item.fecha) + '</span></div>' +
+          '<div>' + escHtml(item.detalle) + ' - ' + pesos(item.total) + '</div>' +
+          (item.nota ? '<div>' + escHtml(item.nota) + '</div>' : '') +
+          '<div style="margin-top:8px">' +
+          ((item.status === 'Pendiente' || item.status === 'Entregado') ?
+            (item.tipo === 'pedido' ?
+              '<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido(\'' + item.id + '\')">Pagar</button>' :
+              '<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta(\'' + item.id + '\')">Pagar</button>') : '') +
+          (item.status === 'Pendiente' ?
+            (item.tipo === 'pedido' ?
+              '<button class="btn btn-danger btn-sm" onclick="cancelarPedido(\'' + item.id + '\')">Cancelar</button>' :
+              '<button class="btn btn-danger btn-sm" onclick="cancelarVenta(\'' + item.id + '\')">Cancelar</button>') : '') +
+          '<button class="btn btn-outline btn-sm" onclick="verFactura(\'' + item.tipo + '\', \'' + item.id + '\')">Factura</button>' +
+          '</div></div>';
+      }).join('');
     };
+
     const chips = cont.querySelectorAll('[data-status]');
     chips.forEach(chip => {
       chip.onclick = () => {
@@ -1483,25 +1445,34 @@ async function renderAdminPedidos(cont) {
       };
     });
     renderList('todos');
+
     const pagadas = items.filter(i => i.status === 'Pagado');
     const mapa = new Map();
     pagadas.forEach(i => { const d = fmtDateShort(i.fecha); mapa.set(d, (mapa.get(d) || 0) + i.total); });
     const sorted = Array.from(mapa.entries()).sort((a,b) => a[0].localeCompare(b[0]));
-    const ctx = document.getElementById('transChart').getContext('2d');
-    if (G.transChart && typeof G.transChart.destroy === 'function') G.transChart.destroy();
-    if (sorted.length) {
-      G.transChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas pagadas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(44,125,160,0.75)' }] },
-        options: { responsive: true, scales: { y: { ticks: { callback: v => pesos(v) } } } }
-      });
-    } else {
-      ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    const transCanvas = document.getElementById('transChart');
+    if (transCanvas) {
+      const ctx = transCanvas.getContext('2d');
+      if (G.transChart && typeof G.transChart.destroy === 'function') G.transChart.destroy();
+      if (sorted.length) {
+        G.transChart = new Chart(ctx, {
+          type: 'bar',
+          data: { labels: sorted.map(e=>e[0]), datasets: [{ label: 'Ventas pagadas', data: sorted.map(e=>e[1]), backgroundColor: 'rgba(44,125,160,0.75)' }] },
+          options: { responsive: true, scales: { y: { ticks: { callback: v => pesos(v) } } } }
+        });
+      } else {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
     }
+
+    // FIX: verFactura — sintaxis corregida (eliminado ')' extra al final de itemsHtml para venta directa)
     window.verFactura = async (tipo, id) => {
       let transaccion;
-      if (tipo === 'pedido') transaccion = G.pedidosAll.find(p => p.id == id);
-      else transaccion = G.ventasAll.find(v => v.id == id);
+      if (tipo === 'pedido') {
+        transaccion = G.pedidosAll.find(p => p.id == id);
+      } else {
+        transaccion = G.ventasAll.find(v => v.id == id);
+      }
       if (!transaccion) return;
       let badgeEstado = '';
       if (transaccion.status === 'Pendiente') badgeEstado = 'badge-pending';
@@ -1510,65 +1481,73 @@ async function renderAdminPedidos(cont) {
       let itemsHtml = '';
       let clienteHtml = '';
       if (tipo === 'pedido') {
-        itemsHtml = (transaccion.items || []).map(i => `<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('');
+        itemsHtml = (transaccion.items || []).map(i =>
+          '<tr><td>Cubeta 24 huevos</td><td>' + i.cant + '</td><td>' + pesos(i.precio) + '</td><td>' + pesos(i.sub) + '</td></tr>'
+        ).join('');
         const { data: usuario } = await supabase.from('usuarios').select('nombre, telefono, whatsapp, direccion').eq('user_id', transaccion.user_id).single();
-        clienteHtml = `<p><strong>${usuario?.nombre || 'N/A'}</strong><br>${usuario?.direccion ? `Dirección: ${usuario.direccion}<br>` : ''}Teléfono: ${usuario?.telefono || 'No registrado'}<br>WhatsApp: ${usuario?.whatsapp || (usuario?.telefono || 'No registrado')}</p>`;
+        clienteHtml = '<p><strong>' + (usuario ? escHtml(usuario.nombre) : 'N/A') + '</strong><br>' +
+          (usuario && usuario.direccion ? 'Direccion: ' + escHtml(usuario.direccion) + '<br>' : '') +
+          'Telefono: ' + (usuario && usuario.telefono ? escHtml(usuario.telefono) : 'No registrado') + '<br>' +
+          'WhatsApp: ' + (usuario && usuario.whatsapp ? escHtml(usuario.whatsapp) : (usuario && usuario.telefono ? escHtml(usuario.telefono) : 'No registrado')) + '</p>';
       } else {
-        itemsHtml = `<tr><td>Cubeta 24 huevos (Venta directa)</td><td>${transaccion.cant}</td><td>${pesos(transaccion.precio_unitario)}</td><td>${pesos(transaccion.total)}</td>`);
-        clienteHtml = `<p>Venta directa registrada por administrador</p>`;
+        // FIX CRITICO: eliminado ')' sobrante al final — era: `...${pesos(transaccion.total)}</td>`);
+        itemsHtml = '<tr><td>Cubeta 24 huevos (Venta directa)</td><td>' + transaccion.cant + '</td><td>' + pesos(transaccion.precio_unitario) + '</td><td>' + pesos(transaccion.total) + '</td></tr>';
+        clienteHtml = '<p>Venta directa registrada por administrador</p>';
       }
-      $('invoiceContent').innerHTML = `
-        <div class="invoice">
-          <div class="invoice-header">
-            <div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div>
-            <div class="invoice-num">${transaccion.invoice_number || 'Sin factura'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
-          </div>
-          <div class="invoice-section"><h4>Cliente</h4>${clienteHtml}</div>
-          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></td></div>
-          ${transaccion.nota ? `<p class="invoice-note">Nota: ${transaccion.nota}</p>` : ''}
-          <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
-          <div class="invoice-footer">IVA exento — Art. 424 E.T.</div>
-        </div>`;
+      $('invoiceContent').innerHTML =
+        '<div class="invoice"><div class="invoice-header">' +
+        '<div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div>' +
+        '<div class="invoice-num">' + escAttr(transaccion.invoice_number || 'Sin factura') + '<br>' + fmtDate(transaccion.fecha) + '<br>' +
+        '<span class="badge ' + badgeEstado + '">' + transaccion.status + '</span></div></div>' +
+        '<div class="invoice-section"><h4>Cliente</h4>' + clienteHtml + '</div>' +
+        '<div class="invoice-section"><h4>Detalle</h4>' +
+        '<table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead>' +
+        '<tbody>' + itemsHtml + '</tbody></table></div>' +
+        (transaccion.nota ? '<p class="invoice-note">Nota: ' + escHtml(transaccion.nota) + '</p>' : '') +
+        '<div class="invoice-total">Total: ' + pesos(transaccion.total) + '</div>' +
+        '<div class="invoice-footer">IVA exento - Art. 424 E.T.</div></div>';
       $('invoiceModal').classList.remove('hidden');
     };
+
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error: ' + escHtml(e.message) + '</div>';
   }
 }
 
-// ========== INVENTARIO ==========
+// ========== INVENTARIO (CORREGIDO - <tr> en lugar de <td><td>) ==========
 async function renderAdminInventario(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const stock = await getStock();
     const { data: movimientos, error } = await supabase.from('stock_movimientos').select('*').order('fecha', { ascending: false }).limit(50);
     if (error) throw error;
-    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></td></thead><tbody>';
+    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
     (movimientos || []).forEach(m => {
-      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
+      // FIX: era `<td><td>...` — corregido a `<tr><td>...`
+      movimientosHtml += '<tr><td>' + fmtDate(m.fecha) + '</td><td>' + escHtml(m.motivo) + '</td>' +
+        '<td style="color:' + (m.cantidad < 0 ? 'var(--c-red)' : 'var(--c-green)') + '">' + (m.cantidad > 0 ? '+' + m.cantidad : m.cantidad) + '</td>' +
+        '<td>' + escHtml(m.tipo_movimiento) + '</td></tr>';
     });
-    movimientosHtml += `</tbody></table></div>`;
-    cont.innerHTML = `
-      <div class="card stock-card">
-        <div><strong>🥚 Cubetas disponibles:</strong> <span class="stock-number" id="stockNum">${stock}</span></div>
-        <div>
-          <label style="font-size:0.8rem;">Ajustar stock:</label>
-          <input type="number" id="nuevoStock" value="${stock}" step="1" style="width:120px; margin:0 8px;">
-          <button class="btn btn-primary btn-sm" id="btnAjustarStock">Actualizar</button>
-          <button class="btn btn-ghost btn-sm" id="btnRefrescarStock">⟳</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">📜 Historial de movimientos (últimos 50)</div>
-        ${movimientosHtml}
-      </div>`;
+    movimientosHtml += '</tbody></table></div>';
+    cont.innerHTML =
+      '<div class="card stock-card">' +
+        '<div><strong>Cubetas disponibles:</strong> <span class="stock-number" id="stockNum">' + stock + '</span></div>' +
+        '<div>' +
+          '<label style="font-size:0.8rem;">Ajustar stock:</label>' +
+          '<input type="number" id="nuevoStock" value="' + stock + '" step="1" style="width:120px; margin:0 8px;">' +
+          '<button class="btn btn-primary btn-sm" id="btnAjustarStock">Actualizar</button>' +
+          '<button class="btn btn-ghost btn-sm" id="btnRefrescarStock">Refrescar</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card"><div class="card-title">Historial de movimientos (ultimos 50)</div>' + movimientosHtml + '</div>';
+
     requestAnimationFrame(() => {
       const btnAjustar = document.getElementById('btnAjustarStock');
       const btnRefrescar = document.getElementById('btnRefrescarStock');
       if (btnAjustar) {
         btnAjustar.onclick = async () => {
           const nuevo = parseInt(document.getElementById('nuevoStock').value);
-          if (isNaN(nuevo) || nuevo < 0) { alert('Stock inválido'); return; }
+          if (isNaN(nuevo) || nuevo < 0) { alert('Stock invalido'); return; }
           try {
             await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
             await renderAdminInventario(cont);
@@ -1581,13 +1560,13 @@ async function renderAdminInventario(cont) {
       }
     });
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error: ' + escHtml(e.message) + '</div>';
   }
 }
 
 // ========== USUARIOS ==========
 async function renderAdminUsuarios(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const { data: users, error } = await supabase.from('usuarios').select('*').order('created_at', { ascending: false });
     if (error) throw error;
@@ -1596,149 +1575,163 @@ async function renderAdminUsuarios(cont) {
       cont.innerHTML = '<div class="card"><div class="cart-empty">No hay usuarios registrados</div></div>';
       return;
     }
-    let html = `
-      <div class="card" style="background:#e6f4ea; border-left: 6px solid var(--c-green);">
-        <div class="card-title">🚚 Políticas de envío</div>
-        <p>✅ <strong>Ubaté:</strong> Envío gratis a partir de 2 cubetas.</p>
-        <p>✅ <strong>Pueblos cercanos (Sutatausa, Cucunubá, Lenguazaque, etc.):</strong> Envío gratis si el pedido supera las 20 cubetas.</p>
-        <p>⚠️ <strong>Otras ciudades o municipios:</strong> Los gastos de envío corren por cuenta del cliente (sujeto a cotización).</p>
-      </div>
-      <div class="card">
-        <div class="card-title">👥 Gestión de usuarios (${G.usersAll.length})</div>
-        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th>Admin</th><th>Acciones</th></tr></thead><tbody>`;
     const tipos = ['natural','negocio','empresa','restaurante','comida_rapida','pizzeria','bodega','otro_negocio'];
-    G.usersAll.forEach(u => {
-      html += `
-        <tr>
-          <td><input id="un_${u.user_id}" value="${escAttr(u.nombre||'')}"></td>
-          <td style="color:var(--c-muted);font-size:.85rem">${escAttr(u.email||'')}</td>
-          <td><select id="ut_${u.user_id}">${tipos.map(t=>`<option value="${t}" ${u.tipo===t?'selected':''}>${t}</option>`).join('')}</select></td>
-          <td><input type="checkbox" id="ua_${u.user_id}" ${u.es_admin?'checked':''}></td>
-          <td><button class="btn btn-primary btn-sm" onclick="adminGuardarUsuario('${u.user_id}')">Guardar</button> <button class="btn btn-danger btn-sm" onclick="adminEliminarUsuario('${u.user_id}')">Eliminar</button></td>
-        </tr>
-      `;
-    });
-    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
+    let rows = G.usersAll.map(u =>
+      '<tr>' +
+      '<td><input id="un_' + u.user_id + '" value="' + escAttr(u.nombre||'') + '"></td>' +
+      '<td style="color:var(--c-muted);font-size:.85rem">' + escAttr(u.email||'') + '</td>' +
+      '<td><select id="ut_' + u.user_id + '">' + tipos.map(t => '<option value="' + t + '"' + (u.tipo===t?' selected':'') + '>' + t + '</option>').join('') + '</select></td>' +
+      '<td><input type="checkbox" id="ua_' + u.user_id + '"' + (u.es_admin?' checked':'') + ' style="width:auto"></td>' +
+      '<td>' +
+        '<button class="btn btn-primary btn-sm" onclick="adminGuardarUsuario(\'' + u.user_id + '\')">Guardar</button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="adminEliminarUsuario(\'' + u.user_id + '\')">Eliminar</button>' +
+      '</td></tr>'
+    ).join('');
+    cont.innerHTML =
+      '<div class="card" style="background:#e6f4ea;border-left:6px solid var(--c-green);">' +
+        '<div class="card-title">Politicas de envio</div>' +
+        '<p><strong>Ubate:</strong> Envio gratis a partir de 2 cubetas.</p>' +
+        '<p><strong>Pueblos cercanos:</strong> Envio gratis si el pedido supera las 20 cubetas.</p>' +
+        '<p><strong>Otras ciudades:</strong> Los gastos de envio corren por cuenta del cliente.</p>' +
+      '</div>' +
+      '<div class="card"><div class="card-title">Gestion de usuarios (' + G.usersAll.length + ')</div>' +
+      '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Tipo</th><th>Admin</th><th>Acciones</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>' +
+      '<div id="usersAdminMsg"></div></div>';
+
     window.adminGuardarUsuario = async (uid) => {
-      const nombre = $(`un_${uid}`).value.trim();
-      const tipo = $(`ut_${uid}`).value;
-      const es_admin = $(`ua_${uid}`).checked;
-      if (!nombre) { showMsg('usersAdminMsg', 'El nombre no puede estar vacío', 'error'); return; }
+      const nombre = $('un_' + uid) ? $('un_' + uid).value.trim() : '';
+      const tipo = $('ut_' + uid) ? $('ut_' + uid).value : 'natural';
+      const es_admin = $('ua_' + uid) ? $('ua_' + uid).checked : false;
+      if (!nombre) { showMsg('usersAdminMsg', 'El nombre no puede estar vacio', 'error'); return; }
       try {
         await dbUpdateUser(uid, { nombre, tipo, es_admin });
-        showMsg('usersAdminMsg', '✅ Usuario actualizado', 'success');
+        showMsg('usersAdminMsg', 'Usuario actualizado', 'success');
         setTimeout(() => clearMsg('usersAdminMsg'), 3000);
         await renderAdminTab('usuarios');
-      } catch(e) { showMsg('usersAdminMsg', '❌ ' + e.message, 'error'); }
+      } catch(e) { showMsg('usersAdminMsg', e.message, 'error'); }
     };
     window.adminEliminarUsuario = async (uid) => {
       if (uid === G.userId) { alert('No puedes eliminarte a ti mismo'); return; }
-      if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return;
+      if (!confirm('Eliminar este usuario? Esta accion no se puede deshacer.')) return;
       try {
         await dbDeleteUser(uid);
         await renderAdminTab('usuarios');
       } catch(e) { alert('Error: ' + e.message); }
     };
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error: ' + escHtml(e.message) + '</div>';
   }
 }
 
 // ========== SUGERENCIAS ==========
 async function renderAdminSugerencias(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const { data: sugs, error } = await supabase.from('sugerencias').select('*').order('fecha', { ascending: false });
     if (error) throw error;
     if (!sugs || !sugs.length) {
-      cont.innerHTML = '<div class="card"><div class="cart-empty">Sin sugerencias aún</div></div>';
+      cont.innerHTML = '<div class="card"><div class="cart-empty">Sin sugerencias aun</div></div>';
       return;
     }
-    let html = `<div class="card"><div class="card-title">💬 Buzón de sugerencias (${sugs.length})</div>`;
+    let html = '<div class="card"><div class="card-title">Buzon de sugerencias (' + sugs.length + ')</div>';
     sugs.forEach(s => {
-      html += `<div class="sug-card"><div><strong>${escHtml(s.nombre||'Anónimo')}</strong> ${s.email?`· ${escHtml(s.email)}`:''}</div><p>${escHtml(s.mensaje)}</p><div class="sug-meta">${fmtDate(s.fecha)}</div></div>`;
+      html += '<div class="sug-card"><div><strong>' + escHtml(s.nombre||'Anonimo') + '</strong>' +
+        (s.email ? ' - ' + escHtml(s.email) : '') + '</div>' +
+        '<p>' + escHtml(s.mensaje) + '</p>' +
+        '<div class="sug-meta">' + fmtDate(s.fecha) + '</div></div>';
     });
-    cont.innerHTML = html + `</div>`;
+    cont.innerHTML = html + '</div>';
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error: ' + escHtml(e.message) + '</div>';
   }
 }
 
-// ========== RESPALDO ==========
+// ========== RESPALDO (CORREGIDO - onerror con comillas correctas) ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
-  cont.innerHTML = `
-    <div class="card">
-      <div class="card-title">💾 Respaldo de datos</div>
-      <div style="margin-bottom:1rem;color:var(--c-muted)">Exporta todos los datos en formato JSON o CSV.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:.75rem">
-        <button class="btn btn-primary" id="exportJsonFull">JSON completo</button>
-        <button class="btn btn-ghost" id="exportPedidosFull">CSV pedidos</button>
-        <button class="btn btn-ghost" id="exportVentasFull">CSV ventas directas</button>
-        <button class="btn btn-ghost" id="exportStockMovimientos">CSV movimientos stock</button>
-      </div>
-      <div id="backupFullMsg" class="mt-1"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">🛠️ Herramientas de limpieza (datos de prueba)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:.75rem">
-        <button class="btn btn-info" id="fixMissingInvoicesBtn">Asignar factura a ventas sin factura</button>
-        <button class="btn btn-warning" id="cancelPendingVentasBtn">Poner todas las ventas pendientes como canceladas</button>
-        <button class="btn btn-secondary" id="showStatsBtn">Mostrar estadísticas de ventas directas</button>
-      </div>
-      <div id="limpiezaMsg" class="mt-1"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">🖼️ Logo personalizado</div>
-      <div class="logo-upload" onclick="$('logoFileInput').click()">
-        ${logoActual ? `<img src="${logoActual}" class="logo-preview">` : '<img src="logo.svg" class="logo-preview" onerror="this.outerHTML=\'<i class=\'fas fa-image\'></i>\'">'}
-        <p>Haz clic para cambiar el logo</p>
-      </div>
-      ${logoActual ? `<button class="btn btn-ghost btn-sm mt-1" id="resetLogoFull">Restaurar logo original</button>` : ''}
-    </div>
-  `;
-  $('#exportJsonFull').onclick = async () => {
+  // FIX: el onerror del img tenia comillas anidadas mal escapadas — reemplazado por version segura
+  const logoHtmlRespaldo = logoActual
+    ? '<img src="' + escAttr(logoActual) + '" class="logo-preview">'
+    : '<img src="logo.svg" class="logo-preview" onerror="this.style.display=\'none\'">';
+
+  cont.innerHTML =
+    '<div class="card">' +
+      '<div class="card-title">Respaldo de datos</div>' +
+      '<div style="margin-bottom:1rem;color:var(--c-muted)">Exporta todos los datos en formato JSON o CSV.</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:.75rem">' +
+        '<button class="btn btn-primary" id="exportJsonFull">JSON completo</button>' +
+        '<button class="btn btn-ghost" id="exportPedidosFull">CSV pedidos</button>' +
+        '<button class="btn btn-ghost" id="exportVentasFull">CSV ventas directas</button>' +
+        '<button class="btn btn-ghost" id="exportStockMovimientos">CSV movimientos stock</button>' +
+      '</div>' +
+      '<div id="backupFullMsg" class="mt-1"></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title">Herramientas de limpieza</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:.75rem">' +
+        '<button class="btn btn-info" id="fixMissingInvoicesBtn">Asignar factura a ventas sin factura</button>' +
+        '<button class="btn btn-danger" id="cancelPendingVentasBtn">Cancelar ventas directas pendientes</button>' +
+        '<button class="btn btn-ghost" id="showStatsBtn">Mostrar estadisticas ventas directas</button>' +
+      '</div>' +
+      '<div id="limpiezaMsg" class="mt-1"></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title">Logo personalizado</div>' +
+      '<div class="logo-upload" onclick="$(\'logoFileInput\').click()">' +
+        logoHtmlRespaldo +
+        '<p style="margin-top:.5rem;color:var(--c-muted)">Haz clic para cambiar el logo</p>' +
+      '</div>' +
+      (logoActual ? '<button class="btn btn-ghost btn-sm mt-1" id="resetLogoFull">Restaurar logo original</button>' : '') +
+    '</div>';
+
+  $('exportJsonFull').onclick = async () => {
     const [usuarios, pedidos, ventas, sugerencias, stock, movimientos] = await Promise.all([
       supabase.from('usuarios').select('*'), supabase.from('pedidos').select('*'),
       supabase.from('ventas_directas').select('*'), supabase.from('sugerencias').select('*'),
       supabase.from('stock').select('*'), supabase.from('stock_movimientos').select('*')
     ]);
-    const data = { fecha: new Date().toISOString(), usuarios: usuarios.data || [], pedidos: pedidos.data || [], ventas_directas: ventas.data || [], sugerencias: sugerencias.data || [], stock: stock.data || [], movimientos: movimientos.data || [] };
+    const data = {
+      fecha: new Date().toISOString(),
+      usuarios: usuarios.data || [], pedidos: pedidos.data || [],
+      ventas_directas: ventas.data || [], sugerencias: sugerencias.data || [],
+      stock: stock.data || [], movimientos: movimientos.data || []
+    };
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    a.download = `respaldo_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = 'respaldo_' + new Date().toISOString().slice(0,10) + '.json';
     a.click();
-    showMsg('backupFullMsg', '✅ Respaldo exportado', 'success');
+    showMsg('backupFullMsg', 'Respaldo exportado', 'success');
   };
-  $('#exportPedidosFull').onclick = async () => {
+  $('exportPedidosFull').onclick = async () => {
     const { data } = await supabase.from('pedidos').select('*');
     if (!data || !data.length) { alert('No hay pedidos'); return; }
     let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
-    data.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    data.forEach(p => { csv += '"' + p.invoice_number + '","' + fmtDate(p.fecha) + '",' + p.total + ',"' + p.status + '","' + p.payment_method + '","' + (p.items||[]).reduce((s,i)=>s+i.cant,0) + '","' + (p.nota||'') + '"\n'; });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'pedidos_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
   };
-  $('#exportVentasFull').onclick = async () => {
+  $('exportVentasFull').onclick = async () => {
     const { data } = await supabase.from('ventas_directas').select('*');
     if (!data || !data.length) { alert('No hay ventas directas'); return; }
     let csv = 'Factura,Fecha,Tipo,Cantidad,Precio Unitario,Total,Estado,Nota\n';
-    data.forEach(v => csv += `"${v.invoice_number || 'N/A'}","${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total},"${v.status}","${v.nota||''}"\n`);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    data.forEach(v => { csv += '"' + (v.invoice_number || 'N/A') + '","' + fmtDate(v.fecha) + '","' + v.tipo_nombre + '",' + v.cant + ',' + v.precio_unitario + ',' + v.total + ',"' + v.status + '","' + (v.nota||'') + '"\n'; });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'ventas_directas_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
   };
-  $('#exportStockMovimientos').onclick = async () => {
+  $('exportStockMovimientos').onclick = async () => {
     const { data } = await supabase.from('stock_movimientos').select('*').order('fecha', { ascending: false });
     if (!data || !data.length) { alert('No hay movimientos'); return; }
     let csv = 'Fecha,Motivo,Cantidad,Tipo\n';
-    data.forEach(m => csv += `"${fmtDate(m.fecha)}","${m.motivo}",${m.cantidad},"${m.tipo_movimiento}"\n`);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `stock_movimientos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    data.forEach(m => { csv += '"' + fmtDate(m.fecha) + '","' + escHtml(m.motivo) + '",' + m.cantidad + ',"' + m.tipo_movimiento + '"\n'; });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'stock_movimientos_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
   };
-  const resetBtn = $('#resetLogoFull');
+  const resetBtn = $('resetLogoFull');
   if (resetBtn) resetBtn.onclick = () => {
     lsSet('granjaLogo', '');
     ['clientTopLogo', 'adminTopLogo'].forEach(id => setLogoEl($(id)));
     updateAuthLogo();
     renderAdminRespaldo(cont);
   };
-  $('#fixMissingInvoicesBtn').onclick = async () => {
+  $('fixMissingInvoicesBtn').onclick = async () => {
     const { data: sinFactura, error } = await supabase.from('ventas_directas').select('*').is('invoice_number', null);
     if (error) { alert('Error: ' + error.message); return; }
     if (!sinFactura.length) { alert('No hay ventas directas sin factura.'); return; }
@@ -1748,13 +1741,13 @@ function renderAdminRespaldo(cont) {
       const { error: updErr } = await supabase.from('ventas_directas').update({ invoice_number: newInvoice }).eq('id', v.id);
       if (!updErr) count++;
     }
-    alert(`Se asignaron facturas a ${count} ventas directas.`);
+    alert('Se asignaron facturas a ' + count + ' ventas directas.');
     await renderAdminTab('respaldo');
     await renderAdminTab('ventas');
     await renderAdminTab('pedidos');
   };
-  $('#cancelPendingVentasBtn').onclick = async () => {
-    if (!confirm('¿Poner TODAS las ventas directas con estado Pendiente (o NULL) como Canceladas? Esto afectará la meta si estaban sumando.')) return;
+  $('cancelPendingVentasBtn').onclick = async () => {
+    if (!confirm('Poner TODAS las ventas directas pendientes como Canceladas?')) return;
     const { error } = await supabase.from('ventas_directas').update({ status: 'Cancelado' }).in('status', ['Pendiente', null]);
     if (error) { alert('Error: ' + error.message); return; }
     alert('Ventas pendientes canceladas.');
@@ -1762,44 +1755,49 @@ function renderAdminRespaldo(cont) {
     await renderAdminTab('ventas');
     await renderAdminTab('pedidos');
   };
-  $('#showStatsBtn').onclick = async () => {
+  $('showStatsBtn').onclick = async () => {
     const { data: ventas, error } = await supabase.from('ventas_directas').select('status, total');
     if (error) { alert('Error: ' + error.message); return; }
-    const total = ventas.reduce((s,v) => s + v.total, 0);
+    const totalSum = ventas.reduce((s,v) => s + v.total, 0);
     const pendientes = ventas.filter(v => v.status === 'Pendiente' || !v.status).length;
     const pagadas = ventas.filter(v => v.status === 'Pagado').length;
     const canceladas = ventas.filter(v => v.status === 'Cancelado').length;
-    alert(`Ventas directas:\nTotal: ${ventas.length}\nPendientes: ${pendientes}\nPagadas: ${pagadas}\nCanceladas: ${canceladas}\nSuma total de todas: ${pesos(total)}`);
+    alert('Ventas directas:\nTotal: ' + ventas.length + '\nPendientes: ' + pendientes + '\nPagadas: ' + pagadas + '\nCanceladas: ' + canceladas + '\nSuma total: ' + pesos(totalSum));
   };
 }
 
 // ========== SUPER ADMIN ==========
 async function renderAdminAdmins(cont) {
-  cont.innerHTML = '<div class="loader">Cargando...</div>';
+  cont.innerHTML = '<div class="loader"></div>';
   try {
     const { data: users } = await supabase.from('usuarios').select('*');
     const admins = (users || []).filter(u => u.es_admin === true);
     let html = '';
     if (!admins.length) {
-      html = `<div class="card"><div class="cart-empty">No hay administradores</div><button class="btn btn-primary btn-sm mt-1" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      html = '<div class="card"><div class="cart-empty">No hay administradores</div>' +
+        '<button class="btn btn-primary btn-sm mt-1" id="addAdminBtn">Agregar administrador</button>' +
+        '<div id="adminsMsg"></div></div>';
     } else {
-      html = `<div class="card"><div class="card-title">👑 Gestión de administradores (${admins.length})</div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead><tbody>`;
-      admins.forEach(a => {
-        html += `
-          <tr>
-            <td><input id="ad_name_${a.user_id}" value="${escAttr(a.nombre)}"></td>
-            <td>${escAttr(a.email)}</td>
-            <td><button class="btn btn-primary btn-sm" onclick="adminGuardarAdmin('${a.user_id}')">Guardar</button> ${a.user_id !== G.userId ? `<button class="btn btn-danger btn-sm" onclick="adminEliminarAdmin('${a.user_id}')">Eliminar</button>` : ''}</td>
-          </tr>
-        `;
-      });
-      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+      let rows = admins.map(a =>
+        '<tr>' +
+        '<td><input id="ad_name_' + a.user_id + '" value="' + escAttr(a.nombre) + '"></td>' +
+        '<td>' + escAttr(a.email) + '</td>' +
+        '<td>' +
+          '<button class="btn btn-primary btn-sm" onclick="adminGuardarAdmin(\'' + a.user_id + '\')">Guardar</button> ' +
+          (a.user_id !== G.userId ? '<button class="btn btn-danger btn-sm" onclick="adminEliminarAdmin(\'' + a.user_id + '\')">Eliminar</button>' : '') +
+        '</td></tr>'
+      ).join('');
+      html = '<div class="card"><div class="card-title">Gestion de administradores (' + admins.length + ')</div>' +
+        '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table></div>' +
+        '<button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button>' +
+        '<div id="adminsMsg"></div></div>';
     }
     cont.innerHTML = html;
     const addBtn = $('addAdminBtn');
     if (addBtn) {
       addBtn.onclick = async () => {
-        const email = prompt('Correo electrónico del nuevo administrador:');
+        const email = prompt('Correo electronico del nuevo administrador:');
         if (!email) return;
         const nombre = prompt('Nombre completo:');
         if (!nombre) return;
@@ -1808,30 +1806,31 @@ async function renderAdminAdmins(cont) {
           const { data, error } = await window.supabase.auth.signUp({ email, password: pass, options: { data: { nombre } } });
           if (error) throw error;
           await window.supabase.from('usuarios').update({ es_admin: true, nombre }).eq('user_id', data.user.id);
-          alert(`Administrador creado. Contraseña temporal: ${pass}\nEl usuario deberá cambiar su contraseña después de iniciar sesión.`);
+          alert('Administrador creado. Contrasena temporal: ' + pass + '\nEl usuario debera cambiar su contrasena despues de iniciar sesion.');
           await renderAdminTab('admins');
         } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
       };
     }
     window.adminGuardarAdmin = async (uid) => {
-      const nombre = $(`ad_name_${uid}`).value.trim();
-      if (!nombre) { showMsg('adminsMsg', 'El nombre no puede estar vacío', 'error'); return; }
+      const el = $('ad_name_' + uid);
+      const nombre = el ? el.value.trim() : '';
+      if (!nombre) { showMsg('adminsMsg', 'El nombre no puede estar vacio', 'error'); return; }
       try {
         await supabase.from('usuarios').update({ nombre }).eq('user_id', uid);
-        showMsg('adminsMsg', '✅ Administrador actualizado', 'success');
+        showMsg('adminsMsg', 'Administrador actualizado', 'success');
         await renderAdminTab('admins');
       } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
     };
     window.adminEliminarAdmin = async (uid) => {
-      if (!confirm('¿Eliminar este administrador? Ya no podrá acceder como admin.')) return;
+      if (!confirm('Eliminar este administrador? Ya no podra acceder como admin.')) return;
       try {
         await supabase.from('usuarios').update({ es_admin: false }).eq('user_id', uid);
-        showMsg('adminsMsg', '✅ Administrador eliminado', 'success');
+        showMsg('adminsMsg', 'Administrador eliminado', 'success');
         await renderAdminTab('admins');
       } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
     };
   } catch(e) {
-    cont.innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+    cont.innerHTML = '<div class="alert alert-error">Error: ' + escHtml(e.message) + '</div>';
   }
 }
 
@@ -1857,7 +1856,7 @@ async function renderAdminAdmins(cont) {
     await window.supabase.auth.signOut();
     $('authPage').style.display = '';
     initAuthPage();
-    showMsg('loginErr', 'Tu perfil no está disponible. Por favor regístrate de nuevo.', 'warn');
+    showMsg('loginErr', 'Tu perfil no esta disponible. Por favor registrate de nuevo.', 'warn');
     return;
   }
   $('authPage').style.display = 'none';
