@@ -11,9 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- SQL (sin cambios, igual que antes) -->
 <style>
-/* ====================== ROOT ====================== */
+/* ====================== ROOT (sin cambios, igual que antes) ====================== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -398,7 +397,7 @@ let G = {
 };
 
 // =================================================================
-//  PRECIOS (sin cambios)
+//  PRECIOS
 // =================================================================
 function calcPrecio(tipo, cant) {
   cant = Number(cant);
@@ -433,7 +432,7 @@ function calcPromoText(tipo) {
 }
 
 // =================================================================
-//  SUPABASE HELPERS (sin cambios)
+//  SUPABASE HELPERS
 // =================================================================
 async function dbLogin(email, pass) {
   const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
@@ -527,7 +526,7 @@ async function dbCreateSugg(s) {
 }
 
 // =================================================================
-//  UTILS (sin cambios)
+//  UTILS
 // =================================================================
 function pesos(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function fmtDate(d) {
@@ -592,7 +591,7 @@ function filterByPeriod(list, period, dateKey='fecha') {
 }
 
 // =================================================================
-//  MODALES GLOBALES (sin cambios)
+//  MODALES GLOBALES
 // =================================================================
 function initModals() {
   $('closeSupportBtn').onclick = () => $('supportModal').classList.add('hidden');
@@ -635,7 +634,7 @@ function initModals() {
 }
 
 // =================================================================
-//  AUTH PAGE (sin cambios)
+//  AUTH PAGE
 // =================================================================
 function initAuthPage() {
   const tL = $('tabLoginBtn'), tR = $('tabRegisterBtn'), pL = $('loginPanel'), pR = $('registerPanel');
@@ -681,7 +680,7 @@ function initAuthPage() {
 }
 
 // =================================================================
-//  CLIENT PAGE (sin cambios, funciona)
+//  CLIENT PAGE
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -837,7 +836,12 @@ async function loadClientOrders() {
   try {
     const pedidos = await dbPedidosUser(G.userId);
     if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem"><span class="egg-empty">📋</span>Aún no tienes pedidos</div>'; return; }
-    cont.innerHTML = pedidos.map(p => `
+    const ahora = new Date();
+    cont.innerHTML = pedidos.map(p => {
+      const fechaPedido = new Date(p.fecha);
+      const diffMin = (ahora - fechaPedido) / (1000 * 60);
+      const puedeCancelar = (p.status === 'Pendiente' && diffMin <= 30);
+      return `
       <div class="order-card ${p.status==='Entregado'?'delivered':''}">
         <div class="order-meta">
           <div><span class="order-num">${escAttr(p.invoice_number)}</span><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}" style="margin-left:.5rem">${p.status}</span></div>
@@ -848,10 +852,20 @@ async function loadClientOrders() {
           <span class="order-total">${pesos(p.total)}</span>
         </div>
         ${p.nota ? `<div style="font-size:.82rem;color:var(--c-muted);margin-top:.3rem;font-style:italic">📝 ${escAttr(p.nota)}</div>` : ''}
-        <div style="margin-top:.6rem"><button class="btn btn-outline btn-sm" onclick="showClientInvoice(${p.id})"><i class="fas fa-file-invoice"></i> Ver factura</button></div>
-      </div>`).join('');
+        <div style="margin-top:.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+          ${p.status === 'Pendiente' && puedeCancelar ? `<button class="btn btn-danger btn-sm" onclick="clienteCancelarPedido('${p.id}')">Cancelar pedido</button>` : ''}
+          <button class="btn btn-outline btn-sm" onclick="showClientInvoice(${p.id})"><i class="fas fa-file-invoice"></i> Ver factura</button>
+        </div>
+      </div>`}).join('');
   } catch(e) { cont.innerHTML = `<div class="alert alert-error">Error al cargar pedidos: ${escHtml(e.message)}</div>`; }
 }
+
+window.clienteCancelarPedido = async (id) => {
+  if (confirm('¿Cancelar este pedido? Solo puedes cancelar dentro de los 30 minutos posteriores a la creación.')) {
+    await dbUpdatePedido(id, { status: 'Cancelado' });
+    await loadClientOrders();
+  }
+};
 
 window.showClientInvoice = async (pedidoId) => {
   const pedidos = await dbPedidosUser(G.userId);
@@ -864,7 +878,7 @@ window.showClientInvoice = async (pedidoId) => {
         <div class="invoice-num"><div style="font-size:1rem;font-weight:700;color:var(--c-brown)">${escAttr(p.invoice_number)}</div><div>${fmtDate(p.fecha)}</div><div>${p.payment_method}</div><div><span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div></div>
       </div>
       <div class="invoice-section"><h4>Cliente</h4><p>${escHtml(G.nombre)}${G.documento?'<br>CC/NIT: '+escHtml(G.documento):''}${G.direccion?'<br>'+escHtml(G.direccion):''}</p></div>
-      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div>
+      <div class="invoice-section"><h4>Detalle del pedido</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos codorniz</td><td>${i.cant}</td>}<td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div>
       ${p.nota?`<p style="font-size:.85rem;color:var(--c-muted);font-style:italic;margin-bottom:.5rem">Nota: ${escHtml(p.nota)}</p>`:''}
       <div class="invoice-total">Total: ${pesos(p.total)}</div>
       <div class="invoice-footer">Producto exento de IVA — Art. 424 E.T. · ¡Gracias por su compra!</div>
@@ -873,7 +887,7 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (CORREGIDA Y SIMPLIFICADA)
+//  ADMIN PAGE
 // =================================================================
 async function initAdminPage() {
   console.log('initAdminPage, esAdmin:', G.esAdmin);
@@ -922,7 +936,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS (CORREGIDA) ==========
+// ========== VENTAS ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -986,19 +1000,10 @@ async function renderAdminVentas(cont) {
     <div class="card"><div class="card-title">📊 Ventas directas por día</div><canvas id="chartDir" height="100"></canvas></div>
     <div class="card"><div class="card-title">📈 Pedidos app por día</div><canvas id="chartPed" height="100"></canvas></div>`;
 
-  // Usar requestAnimationFrame para asegurar que el DOM esté listo
   requestAnimationFrame(() => {
-    // Actualizar preview precio
     const vCant = $('vCant');
     const vTipoSelect = $('vTipoSelect');
-    const vPrecioPreview = $('vPrecioPreview');
-    const vTipoPreview = $('vTipoPreview');
-    const vTotalPreview = $('vTotalPreview');
-
-    if (!vCant || !vTipoSelect) {
-      console.error('Elementos de ventas no encontrados');
-      return;
-    }
+    if (!vCant || !vTipoSelect) return;
 
     const updatePreview = () => {
       const cant = parseInt(vCant.value) || 0;
@@ -1013,43 +1018,37 @@ async function renderAdminVentas(cont) {
         else if (cant >= 10) { precio = 4700; tipoTexto = 'Bodega (10-19)'; }
         else { precio = 4900; tipoTexto = 'Estándar (<10)'; }
       }
-      if (vPrecioPreview) vPrecioPreview.textContent = pesos(precio);
-      if (vTipoPreview) vTipoPreview.textContent = tipoTexto;
-      if (vTotalPreview) vTotalPreview.textContent = pesos(cant * precio);
+      $('vPrecioPreview').textContent = pesos(precio);
+      $('vTipoPreview').textContent = tipoTexto;
+      $('vTotalPreview').textContent = pesos(cant * precio);
     };
     vCant.addEventListener('input', updatePreview);
     vTipoSelect.addEventListener('change', updatePreview);
     updatePreview();
 
-    // Registrar venta
-    const btnRegistrar = $('btnRegistrarVenta');
-    if (btnRegistrar) {
-      btnRegistrar.onclick = async () => {
-        const cant = parseInt(vCant.value);
-        if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
-        let tipoForzado = vTipoSelect.value;
-        let precio = 0, nombre = '';
-        if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
-        else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
-        else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
-        else {
-          if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
-          else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
-          else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
-          else { precio = 4900; nombre = 'Estándar'; }
-        }
-        try {
-          await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
-          showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
-          vCant.value = 1;
-          updatePreview();
-          // Recargar pestaña
-          await renderAdminTab('ventas');
-        } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
-      };
-    }
+    $('btnRegistrarVenta').onclick = async () => {
+      const cant = parseInt(vCant.value);
+      if (!cant || cant < 1 || cant > 500) { showMsg('vMsg', 'Cantidad inválida', 'error'); return; }
+      let tipoForzado = vTipoSelect.value;
+      let precio = 0, nombre = '';
+      if (tipoForzado === 'bodega') { precio = 4300; nombre = 'Bodega'; }
+      else if (tipoForzado === 'restaurante') { precio = 4300; nombre = 'Restaurante'; }
+      else if (tipoForzado === 'comida_rapida') { precio = 4300; nombre = 'Comida rápida'; }
+      else {
+        if (cant >= 50) { precio = 4300; nombre = 'Mayorista'; }
+        else if (cant >= 20) { precio = 4500; nombre = 'Bodega 20-49'; }
+        else if (cant >= 10) { precio = 4700; nombre = 'Bodega 10-19'; }
+        else { precio = 4900; nombre = 'Estándar'; }
+      }
+      try {
+        await dbCreateVenta({ user_id: G.userId, cant, tipo_nombre: nombre, precio_unitario: precio, total: cant * precio, nota: '', fecha: new Date().toISOString() });
+        showMsg('vMsg', `✅ Venta registrada: ${cant} cubetas · ${pesos(cant*precio)}`, 'success');
+        vCant.value = 1;
+        updatePreview();
+        await renderAdminTab('ventas');
+      } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
+    };
 
-    // Mostrar últimos pedidos
     const lista = $('ultimosPedidosList');
     if (lista) {
       if (!G.pedidosAll.length) lista.innerHTML = '<div class="cart-empty">Sin pedidos</div>';
@@ -1058,41 +1057,46 @@ async function renderAdminVentas(cont) {
           <div class="order-card">
             <div class="order-meta">
               <span class="order-num">${p.invoice_number}</span>
-              <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span>
+              <span class="badge ${p.status==='Entregado'?'badge-delivered':(p.status==='Cancelado'?'badge-pending':'badge-pending')}">${p.status}</span>
               <span class="order-total">${pesos(p.total)}</span>
             </div>
             <div class="order-date">${fmtDate(p.fecha)} · ${p.payment_method}</div>
-            ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Marcar entregado</button>` : ''}
+            <div class="order-note">${p.nota ? `📝 ${p.nota}` : ''}</div>
+            <div style="margin-top:8px">
+              ${p.status === 'Pendiente' ? `<button class="btn btn-success btn-sm" onclick="marcarEntregadoDesdeVentas('${p.id}')">Entregado</button>` : ''}
+              ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarPedidoDesdeVentas('${p.id}')">Cancelar</button>` : ''}
+            </div>
           </div>
         `).join('');
       }
     }
 
-    // Exportar CSV
-    const exportPed = $('exportPedidosBtn');
-    if (exportPed) exportPed.onclick = () => {
+    $('exportPedidosBtn').onclick = () => {
       let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
       G.pedidosAll.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-      a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
     };
-    const exportVen = $('exportVentasBtn');
-    if (exportVen) exportVen.onclick = () => {
+    $('exportVentasBtn').onclick = () => {
       let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
       G.ventasAll.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-      a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
     };
 
-    // Gráficos
     renderChartDir();
     renderChartPed();
   });
 }
+
+window.marcarEntregadoDesdeVentas = async (id) => {
+  await dbUpdatePedido(id, { status: 'Entregado' });
+  await renderAdminTab('ventas');
+};
+window.cancelarPedidoDesdeVentas = async (id) => {
+  if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
+    await dbUpdatePedido(id, { status: 'Cancelado' });
+    await renderAdminTab('ventas');
+  }
+};
 
 function renderChartDir() {
   const canvas = $('chartDir');
@@ -1108,7 +1112,6 @@ function renderChartDir() {
     options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => pesos(v) } } } }
   });
 }
-
 function renderChartPed() {
   const canvas = $('chartPed');
   if (!canvas) return;
@@ -1124,11 +1127,6 @@ function renderChartPed() {
   });
 }
 
-window.marcarEntregadoDesdeVentas = async (id) => {
-  await dbUpdatePedido(id, { status: 'Entregado' });
-  await renderAdminTab('ventas');
-};
-
 // ========== PEDIDOS ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -1140,32 +1138,63 @@ async function renderAdminPedidos(cont) {
       cont.innerHTML = '<div class="card"><div class="cart-empty">No hay pedidos registrados</div></div>';
       return;
     }
-    let html = `<div class="card"><div class="card-title">📦 Todos los pedidos (${G.pedidosAll.length})</div>`;
-    G.pedidosAll.forEach(p => {
-      html += `
+    let html = `<div class="card"><div class="card-title">📦 Todos los pedidos (${G.pedidosAll.length})</div>
+      <div class="filter-bar" id="pedFilterBarAdmin">
+        <button class="chip active" data-status="todos">Todos</button>
+        <button class="chip" data-status="Pendiente">Pendientes</button>
+        <button class="chip" data-status="Entregado">Entregados</button>
+        <button class="chip" data-status="Cancelado">Cancelados</button>
+      </div>
+      <div id="adminPedidosList"></div>
+    </div>`;
+    cont.innerHTML = html;
+
+    const renderList = (status) => {
+      const list = status === 'todos' ? G.pedidosAll : G.pedidosAll.filter(p => p.status === status);
+      const container = $('adminPedidosList');
+      if (!container) return;
+      if (!list.length) { container.innerHTML = '<div class="cart-empty">Sin pedidos</div>'; return; }
+      container.innerHTML = list.map(p => `
         <div class="order-card">
           <div class="order-meta">
-            <div><span class="order-num">${p.invoice_number}</span> <span class="badge ${p.status==='Entregado'?'badge-delivered':'badge-pending'}">${p.status}</span></div>
+            <div><span class="order-num">${p.invoice_number}</span> <span class="badge ${p.status==='Entregado'?'badge-delivered':(p.status==='Cancelado'?'badge-pending':'badge-pending')}">${p.status}</span></div>
             <span class="order-date">${fmtDate(p.fecha)}</span>
           </div>
           <div>${p.payment_method} · ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} cubetas · ${pesos(p.total)}</div>
           ${p.nota ? `<div class="muted">📝 ${p.nota}</div>` : ''}
           <div style="margin-top:8px">
-            ${p.status !== 'Entregado' ? `<button class="btn btn-success btn-sm" onclick="adminMarcarEntregado('${p.id}')">Marcar entregado</button>` : ''}
+            ${p.status === 'Pendiente' ? `<button class="btn btn-success btn-sm" onclick="adminMarcarEntregado('${p.id}')">Entregado</button>` : ''}
+            ${p.status === 'Pendiente' ? `<button class="btn btn-danger btn-sm" onclick="adminCancelarPedido('${p.id}')">Cancelar</button>` : ''}
             <button class="btn btn-ghost btn-sm" onclick="adminVerFactura('${p.id}')">Factura</button>
           </div>
         </div>
-      `;
+      `).join('');
+    };
+
+    const chips = cont.querySelectorAll('[data-status]');
+    chips.forEach(chip => {
+      chip.onclick = () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderList(chip.dataset.status);
+      };
     });
-    cont.innerHTML = html + `</div>`;
+    renderList('todos');
+
     window.adminMarcarEntregado = async (id) => {
       await dbUpdatePedido(id, { status: 'Entregado' });
       await renderAdminTab('pedidos');
     };
+    window.adminCancelarPedido = async (id) => {
+      if (confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) {
+        await dbUpdatePedido(id, { status: 'Cancelado' });
+        await renderAdminTab('pedidos');
+      }
+    };
     window.adminVerFactura = (id) => {
       const p = G.pedidosAll.find(x => x.id == id);
       if (!p) return;
-      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td><td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
+      $('invoiceContent').innerHTML = `<div class="invoice"><div class="invoice-header"><div><div class="invoice-brand">Granja Villa Myriam / Emelina</div><div>NIT: 900.123.456-7</div></div><div class="invoice-num">${p.invoice_number}<br>${fmtDate(p.fecha)}<br>${p.status}</div></div><div><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${(p.items||[]).map(i=>`<tr><td>Cubeta 24 huevos</td><td>${i.cant}</td>}<td>${pesos(i.precio)}</td><td>${pesos(i.sub)}</td></tr>`).join('')}</tbody></table></div><div class="invoice-total">Total: ${pesos(p.total)}</div><div class="invoice-footer">IVA exento — Art. 424 E.T.</div></div>`;
       $('invoiceModal').classList.remove('hidden');
     };
   } catch(e) {
@@ -1197,7 +1226,7 @@ async function renderAdminUsuarios(cont) {
         </tr>
       `;
     });
-    cont.innerHTML = html + `</tbody><td></div><div id="usersAdminMsg"></div></div>`;
+    cont.innerHTML = html + `</tbody></table></div><div id="usersAdminMsg"></div></div>`;
     window.adminGuardarUsuario = async (uid) => {
       const nombre = $(`un_${uid}`).value.trim();
       const tipo = $(`ut_${uid}`).value;
@@ -1271,13 +1300,7 @@ function renderAdminRespaldo(cont) {
       supabase.from('usuarios').select('*'), supabase.from('pedidos').select('*'),
       supabase.from('ventas_directas').select('*'), supabase.from('sugerencias').select('*')
     ]);
-    const data = {
-      fecha: new Date().toISOString(),
-      usuarios: usuarios.data || [],
-      pedidos: pedidos.data || [],
-      ventas_directas: ventas.data || [],
-      sugerencias: sugerencias.data || []
-    };
+    const data = { fecha: new Date().toISOString(), usuarios: usuarios.data || [], pedidos: pedidos.data || [], ventas_directas: ventas.data || [], sugerencias: sugerencias.data || [] };
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
     a.download = `respaldo_${new Date().toISOString().slice(0,10)}.json`;
@@ -1289,20 +1312,14 @@ function renderAdminRespaldo(cont) {
     if (!data || !data.length) { alert('No hay pedidos'); return; }
     let csv = 'Factura,Fecha,Total,Estado,Pago,Cubetas,Nota\n';
     data.forEach(p => csv += `"${p.invoice_number}","${fmtDate(p.fecha)}",${p.total},"${p.status}","${p.payment_method}","${(p.items||[]).reduce((s,i)=>s+i.cant,0)}","${p.nota||''}"\n`);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
   $('#exportVentasFull').onclick = async () => {
     const { data } = await supabase.from('ventas_directas').select('*');
     if (!data || !data.length) { alert('No hay ventas directas'); return; }
     let csv = 'Fecha,Tipo,Cantidad,Precio Unitario,Total\n';
     data.forEach(v => csv += `"${fmtDate(v.fecha)}","${v.tipo_nombre}",${v.cant},${v.precio_unitario},${v.total}\n`);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `ventas_directas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
   const resetBtn = $('#resetLogoFull');
   if (resetBtn) resetBtn.onclick = () => {
@@ -1318,10 +1335,11 @@ async function renderAdminAdmins(cont) {
   try {
     const { data: users } = await supabase.from('usuarios').select('*');
     const admins = (users || []).filter(u => u.es_admin === true);
+    let html = '';
     if (!admins.length) {
-      cont.innerHTML = '<div class="card"><div class="cart-empty">No hay administradores</div><button class="btn btn-primary btn-sm mt-1" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>';
+      html = `<div class="card"><div class="cart-empty">No hay administradores</div><button class="btn btn-primary btn-sm mt-1" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
     } else {
-      let html = `<div class="card"><div class="card-title">👑 Gestión de administradores (${admins.length})</div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead><tbody>`;
+      html = `<div class="card"><div class="card-title">👑 Gestión de administradores (${admins.length})</div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead><tbody>`;
       admins.forEach(a => {
         html += `
           <tr>
@@ -1331,8 +1349,25 @@ async function renderAdminAdmins(cont) {
           </tr>
         `;
       });
-      html += `</tbody></tr></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
-      cont.innerHTML = html;
+      html += `</tbody></table></div><button class="btn btn-primary btn-sm mt-2" id="addAdminBtn">Agregar administrador</button><div id="adminsMsg"></div></div>`;
+    }
+    cont.innerHTML = html;
+    const addBtn = $('addAdminBtn');
+    if (addBtn) {
+      addBtn.onclick = async () => {
+        const email = prompt('Correo electrónico del nuevo administrador:');
+        if (!email) return;
+        const nombre = prompt('Nombre completo:');
+        if (!nombre) return;
+        const pass = Math.random().toString(36).slice(2, 10);
+        try {
+          const { data, error } = await window.supabase.auth.signUp({ email, password: pass, options: { data: { nombre } } });
+          if (error) throw error;
+          await window.supabase.from('usuarios').update({ es_admin: true, nombre }).eq('user_id', data.user.id);
+          alert(`Administrador creado. Contraseña temporal: ${pass}\nEl usuario deberá cambiar su contraseña después de iniciar sesión.`);
+          await renderAdminTab('admins');
+        } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
+      };
     }
     window.adminGuardarAdmin = async (uid) => {
       const nombre = $(`ad_name_${uid}`).value.trim();
@@ -1348,20 +1383,6 @@ async function renderAdminAdmins(cont) {
       try {
         await supabase.from('usuarios').update({ es_admin: false }).eq('user_id', uid);
         showMsg('adminsMsg', '✅ Administrador eliminado', 'success');
-        await renderAdminTab('admins');
-      } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
-    };
-    $('#addAdminBtn').onclick = async () => {
-      const email = prompt('Correo electrónico del nuevo administrador:');
-      if (!email) return;
-      const nombre = prompt('Nombre completo:');
-      if (!nombre) return;
-      const pass = Math.random().toString(36).slice(2, 10);
-      try {
-        const { data, error } = await window.supabase.auth.signUp({ email, password: pass, options: { data: { nombre } } });
-        if (error) throw error;
-        await window.supabase.from('usuarios').update({ es_admin: true, nombre }).eq('user_id', data.user.id);
-        alert(`Administrador creado. Contraseña temporal: ${pass}\nEl usuario deberá cambiar su contraseña después de iniciar sesión.`);
         await renderAdminTab('admins');
       } catch(e) { showMsg('adminsMsg', e.message, 'error'); }
     };
