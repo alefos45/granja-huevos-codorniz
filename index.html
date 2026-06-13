@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS (idénticos a la versión anterior, sin cambios) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -1400,7 +1399,7 @@ function renderChartPed() {
   });
 }
 
-// ========== PEDIDOS (unificado con botón Pagar para Pendiente y Entregado) ==========
+// ========== PEDIDOS (CORREGIDO: sin error de sintaxis) ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
@@ -1445,6 +1444,22 @@ async function renderAdminPedidos(cont) {
         else if (item.status === 'Cancelado') badgeClass = 'badge-canceled';
         else badgeClass = 'badge-pending';
         const tipoLabel = item.tipo === 'pedido' ? '📱 Pedido cliente' : '💰 Venta directa';
+        let botones = '';
+        if (item.status === 'Pendiente' || item.status === 'Entregado') {
+          if (item.tipo === 'pedido') {
+            botones += `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${item.id}')">Pagar</button>`;
+          } else {
+            botones += `<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta('${item.id}')">Pagar</button>`;
+          }
+        }
+        if (item.status === 'Pendiente') {
+          if (item.tipo === 'pedido') {
+            botones += `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${item.id}')">Cancelar</button>`;
+          } else {
+            botones += `<button class="btn btn-danger btn-sm" onclick="cancelarVenta('${item.id}')">Cancelar</button>`;
+          }
+        }
+        botones += `<button class="btn btn-outline btn-sm" onclick="verFactura('${item.tipo}', '${item.id}')">Factura</button>`;
         return `
         <div class="order-card">
           <div class="order-meta">
@@ -1454,13 +1469,7 @@ async function renderAdminPedidos(cont) {
           <div>${item.detalle} · ${pesos(item.total)}</div>
           ${item.nota ? `<div class="muted">📝 ${item.nota}</div>` : ''}
           <div style="margin-top:8px">
-            ${(item.status === 'Pendiente' || item.status === 'Entregado') ? (item.tipo === 'pedido' ? 
-              `<button class="btn btn-success btn-sm" onclick="marcarPagadoPedido('${item.id}')">Pagar</button>` :
-              `<button class="btn btn-success btn-sm" onclick="marcarPagadoVenta('${item.id}')">Pagar</button>`) : ''}
-            ${item.status === 'Pendiente' ? (item.tipo === 'pedido' ?
-              `<button class="btn btn-danger btn-sm" onclick="cancelarPedido('${item.id}')">Cancelar</button>` :
-              `<button class="btn btn-danger btn-sm" onclick="cancelarVenta('${item.id}')">Cancelar</button>`) : ''}
-            <button class="btn btn-outline btn-sm" onclick="verFactura('${item.tipo}', '${item.id}')">Factura</button>
+            ${botones}
           </div>
         </div>
       `}).join('');
@@ -1515,7 +1524,7 @@ async function renderAdminPedidos(cont) {
             <div class="invoice-num">${transaccion.invoice_number || 'Sin factura'}<br>${fmtDate(transaccion.fecha)}<br><span class="badge ${badgeEstado}">${transaccion.status}</span></div>
           </div>
           <div class="invoice-section"><h4>Cliente</h4>${clienteHtml}</div>
-          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
+          <div class="invoice-section"><h4>Detalle</h4><table class="invoice-table"><thead><tr><th>Producto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></td></div>
           ${transaccion.nota ? `<p class="invoice-note">Nota: ${transaccion.nota}</p>` : ''}
           <div class="invoice-total">Total: ${pesos(transaccion.total)}</div>
           <div class="invoice-footer">IVA exento — Art. 424 E.T.</div>
@@ -1534,9 +1543,9 @@ async function renderAdminInventario(cont) {
     const stock = await getStock();
     const { data: movimientos, error } = await supabase.from('stock_movimientos').select('*').order('fecha', { ascending: false }).limit(50);
     if (error) throw error;
-    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></tr></thead><tbody>';
+    let movimientosHtml = '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Motivo</th><th>Cantidad</th><th>Tipo</th></td></thead><tbody>';
     (movimientos || []).forEach(m => {
-      movimientosHtml += `<td><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
+      movimientosHtml += `<tr><td>${fmtDate(m.fecha)}</td><td>${escHtml(m.motivo)}</td><td style="color:${m.cantidad<0?'var(--c-red)':'var(--c-green)'}">${m.cantidad>0?'+'+m.cantidad:m.cantidad}</td><td>${m.tipo_movimiento}</td></tr>`;
     });
     movimientosHtml += `</tbody></table></div>`;
     cont.innerHTML = `
