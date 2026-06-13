@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ========== ESTILOS ORIGINALES (sin cambios, solo añadimos .badge-pagado y .stock-card) ========== */
+/* ========== ESTILOS (sin cambios, solo añadimos .logo-small y .shipping-card) ========== */
 :root {
   --c-bg:       #f7f2e8;
   --c-paper:    #fdfaf3;
@@ -196,8 +196,11 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 .sug-meta { font-size: 0.8rem; color: var(--c-muted); margin-top: 0.35rem; }
 .notification-banner { background: #fff3cd; border-left: 6px solid #ffc107; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: var(--r-sm); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: #856404; }
 .notification-banner i { font-size: 1.4rem; }
+.shipping-card { background: #e6f4ea; border-left: 6px solid var(--c-green); border-radius: var(--r-sm); padding: 1rem; margin-bottom: 1.25rem; }
+.shipping-card p { margin-bottom: 0.5rem; font-size: 0.9rem; }
 .stock-card { background: linear-gradient(135deg, #e8f0fe, #d9e6f5); border: 1px solid var(--c-blue); border-radius: var(--r-sm); padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 .stock-card .stock-number { font-size: 2rem; font-weight: 700; color: var(--c-blue); }
+.logo-small { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; display: inline-block; vertical-align: middle; margin-right: 0.3rem; }
 @media(max-width:768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .form-row.c2 { grid-template-columns: 1fr; }
@@ -210,12 +213,12 @@ h1,h2,h3,h4,h5 { font-family: var(--font-head); }
 </head>
 <body>
 
-<!-- AUTH PAGE (igual que original) -->
+<!-- AUTH PAGE -->
 <div id="authPage" class="page">
   <div class="auth-wrap">
     <div class="auth-brand">
-      <img src="logo.svg" alt="Logo Granja Villa Myriam" id="authLogoImg" onerror="this.style.display='none';this.parentElement.querySelector('.auth-logo-emoji').style.display='block';">
-      <span class="auth-logo-emoji" style="display:none;">🥚</span>
+      <img src="logo.svg" alt="Logo Granja Villa Myriam" id="authLogoImg" style="display:none;">
+      <span id="authLogoFallback" style="display:block;">🥚</span>
       <h1>Granja Villa Myriam / Emelina</h1>
       <p>Huevos de Codorniz · Cubetas de 24 unidades</p>
     </div>
@@ -410,7 +413,7 @@ function calcPromoText(tipo) {
 }
 
 // =================================================================
-//  SUPABASE HELPERS (con nuevas funciones para stock y ventas directas con estado)
+//  SUPABASE HELPERS (sin cambios, pero añadimos helpers para logo)
 // =================================================================
 async function dbLogin(email, pass) {
   const { data, error } = await window.supabase.auth.signInWithPassword({ email, password: pass });
@@ -548,7 +551,7 @@ async function ajustarStockManual(nuevaCantidad, motivo) {
 }
 
 // =================================================================
-//  UTILS
+//  UTILS (incluyendo funciones de logo)
 // =================================================================
 function pesos(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 function fmtDate(d) {
@@ -576,6 +579,7 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch(_) { return nu
 function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// Función mejorada para mostrar el logo (imagen o emoji)
 function setLogoEl(el) {
   if (!el) return;
   const saved = lsGet('granjaLogo');
@@ -584,6 +588,33 @@ function setLogoEl(el) {
   } else {
     el.innerHTML = `<img src="logo.svg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:1.4rem;line-height:44px;text-align:center;display:block\'>🥚</span>'">`;
   }
+}
+
+// Actualizar logo en pantalla de autenticación
+function updateAuthLogo() {
+  const authImg = document.getElementById('authLogoImg');
+  const authFallback = document.getElementById('authLogoFallback');
+  const saved = lsGet('granjaLogo');
+  if (saved) {
+    authImg.src = saved;
+    authImg.style.display = 'block';
+    authFallback.style.display = 'none';
+  } else {
+    authImg.style.display = 'none';
+    authFallback.style.display = 'block';
+  }
+}
+
+// Renderizar políticas de envío en cliente
+function renderShippingCard() {
+  return `
+    <div class="shipping-card">
+      <div class="card-title">🚚 Políticas de envío</div>
+      <p>✅ <strong>Ubaté:</strong> Envío gratis a partir de 2 cubetas.</p>
+      <p>✅ <strong>Pueblos cercanos (Sutatausa, Cucunubá, Lenguazaque, etc.):</strong> Envío gratis si el pedido supera las 20 cubetas.</p>
+      <p>⚠️ <strong>Otras ciudades o municipios:</strong> Los gastos de envío corren por cuenta del cliente (sujeto a cotización).</p>
+    </div>
+  `;
 }
 
 function renderFooter(id) {
@@ -636,17 +667,20 @@ function initModals() {
     reader.onload = ev => {
       const url = ev.target.result;
       lsSet('granjaLogo', url);
+      // Actualizar logos en barras superiores
       ['clientTopLogo','adminTopLogo'].forEach(id => {
         const el = $(id);
-        if (el) el.innerHTML = `<img src="${escAttr(url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Logo">`;
+        if (el) setLogoEl(el);
       });
+      // Actualizar logo en auth
+      updateAuthLogo();
     };
     reader.readAsDataURL(file);
   };
 }
 
 // =================================================================
-//  AUTH PAGE (igual)
+//  AUTH PAGE (con mejora de logo)
 // =================================================================
 function initAuthPage() {
   const tL = $('tabLoginBtn'), tR = $('tabRegisterBtn'), pL = $('loginPanel'), pR = $('registerPanel');
@@ -689,10 +723,11 @@ function initAuthPage() {
     finally { btn.disabled = false; btn.textContent = 'Crear cuenta'; }
   };
   renderFooter('footerAuth');
+  updateAuthLogo(); // Mostrar logo guardado si existe
 }
 
 // =================================================================
-//  CLIENT PAGE (sin cambios, igual que el original funcional)
+//  CLIENT PAGE (con políticas de envío añadidas en la pestaña de pedido)
 // =================================================================
 function initClientPage() {
   $('clientWelcome').textContent = `Hola, ${G.nombre}`;
@@ -707,7 +742,10 @@ function initClientPage() {
     { id: 'historial', label: '📋 Mis pedidos' }
   ].map((t,i) => `<button class="tab-btn${i===0?' active':''}" data-ctab="${t.id}">${t.label}</button>`).join('');
   main.innerHTML = `
-    <div id="ctab-pedido" class="panel active">${buildClientOrderPanel()}</div>
+    <div id="ctab-pedido" class="panel active">
+      ${renderShippingCard()}
+      ${buildClientOrderPanel()}
+    </div>
     <div id="ctab-historial" class="panel">
       <div class="card"><div class="card-title">📋 Historial de pedidos</div>
       <div id="clientOrders"><div class="loader"></div></div></div>
@@ -847,7 +885,7 @@ async function loadClientOrders() {
   cont.innerHTML = '<div class="loader"></div>';
   try {
     const pedidos = await dbPedidosUser(G.userId);
-    if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem"><span class="egg-empty">📋</span>Aún no tienes pedidos</div>'; return; }
+    if (!pedidos.length) { cont.innerHTML = '<div class="cart-empty" style="padding:2rem"><span class="egg-empty">🥚</span>Aún no tienes pedidos</div>'; return; }
     const ahora = new Date();
     const hayEntregados = pedidos.some(p => p.status === 'Entregado');
     let notifHtml = '';
@@ -914,7 +952,7 @@ window.showClientInvoice = async (pedidoId) => {
 };
 
 // =================================================================
-//  ADMIN PAGE (con pestañas originales + inventario nueva)
+//  ADMIN PAGE (sin cambios relevantes, ya tenía políticas de envío)
 // =================================================================
 async function initAdminPage() {
   console.log('initAdminPage, esAdmin:', G.esAdmin);
@@ -963,7 +1001,7 @@ async function renderAdminTab(tab) {
   if (tab === 'admins') await renderAdminAdmins(cont);
 }
 
-// ========== VENTAS (exactamente igual que el original, solo que ahora ventas_directas tiene status y invoice_number) ==========
+// ========== VENTAS (igual que la versión anterior, con ajustes de logo) ==========
 async function renderAdminVentas(cont) {
   console.log('Cargando ventas...');
   cont.innerHTML = '<div class="loader">Cargando...</div>';
@@ -981,7 +1019,6 @@ async function renderAdminVentas(cont) {
   }
 
   const totalVentas = G.ventasAll.reduce((s,v) => s + v.total, 0);
-  // SOLO PEDIDOS CON ESTADO "Pagado" suman a la meta
   const totalPedidosPagados = G.pedidosAll.filter(p => p.status === 'Pagado').reduce((s,p) => s + p.total, 0);
   const total = totalVentas + totalPedidosPagados;
   const pct = Math.min(100, (total / G.META) * 100);
@@ -1075,7 +1112,7 @@ async function renderAdminVentas(cont) {
         vCant.value = 1;
         updatePreview();
         await renderAdminTab('ventas');
-        await renderAdminTab('pedidos'); // para actualizar lista unificada
+        await renderAdminTab('pedidos');
         await renderAdminTab('inventario');
       } catch(e) { showMsg('vMsg', '❌ ' + e.message, 'error'); }
     };
@@ -1125,7 +1162,6 @@ async function renderAdminVentas(cont) {
   });
 }
 
-// Funciones auxiliares para ventas (admin) - actualizan stock al pagar
 window.marcarEntregado = async (id) => {
   await dbUpdatePedido(id, { status: 'Entregado' });
   await renderAdminTab('ventas');
@@ -1202,13 +1238,12 @@ function renderChartPed() {
   });
 }
 
-// ========== PEDIDOS (AHORA UNIFICA PEDIDOS Y VENTAS DIRECTAS) ==========
+// ========== PEDIDOS (unifica pedidos y ventas directas) ==========
 async function renderAdminPedidos(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
     const pedidos = await dbAllPedidos();
     const ventas = await dbAllVentas();
-    // Unificar en un solo array con tipo
     let items = [];
     pedidos.forEach(p => {
       items.push({
@@ -1295,7 +1330,6 @@ async function renderAdminPedidos(cont) {
     });
     renderList('todos');
 
-    // Gráfico de transacciones pagadas por día
     const pagadas = items.filter(i => i.status === 'Pagado');
     const mapa = new Map();
     pagadas.forEach(i => { const d = fmtDateShort(i.fecha); mapa.set(d, (mapa.get(d) || 0) + i.total); });
@@ -1344,7 +1378,7 @@ async function renderAdminPedidos(cont) {
   }
 }
 
-// ========== INVENTARIO (nuevo) ==========
+// ========== INVENTARIO ==========
 async function renderAdminInventario(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
@@ -1376,7 +1410,7 @@ async function renderAdminInventario(cont) {
       try {
         await ajustarStockManual(nuevo, 'Ajuste manual por administrador');
         await renderAdminInventario(cont);
-        await renderAdminTab('ventas'); // opcional
+        await renderAdminTab('ventas');
       } catch(e) { alert('Error: ' + e.message); }
     };
     $('#btnRefrescarStock').onclick = () => renderAdminInventario(cont);
@@ -1399,8 +1433,8 @@ async function renderAdminUsuarios(cont) {
     let html = `
       <div class="card" style="background:#e6f4ea; border-left: 6px solid var(--c-green);">
         <div class="card-title">🚚 Políticas de envío</div>
-        <p style="margin-bottom:0.5rem">✅ <strong>Ubaté:</strong> Envío gratis a partir de 2 cubetas.</p>
-        <p style="margin-bottom:0.5rem">✅ <strong>Pueblos cercanos (Sutatausa, Cucunubá, Lenguazaque, etc.):</strong> Envío gratis si el pedido supera las 20 cubetas.</p>
+        <p>✅ <strong>Ubaté:</strong> Envío gratis a partir de 2 cubetas.</p>
+        <p>✅ <strong>Pueblos cercanos (Sutatausa, Cucunubá, Lenguazaque, etc.):</strong> Envío gratis si el pedido supera las 20 cubetas.</p>
         <p>⚠️ <strong>Otras ciudades o municipios:</strong> Los gastos de envío corren por cuenta del cliente (sujeto a cotización).</p>
       </div>
       <div class="card">
@@ -1444,7 +1478,7 @@ async function renderAdminUsuarios(cont) {
   }
 }
 
-// ========== SUGERENCIAS (igual) ==========
+// ========== SUGERENCIAS ==========
 async function renderAdminSugerencias(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
@@ -1464,7 +1498,7 @@ async function renderAdminSugerencias(cont) {
   }
 }
 
-// ========== RESPALDO (sin soft delete, solo export) ==========
+// ========== RESPALDO ==========
 function renderAdminRespaldo(cont) {
   const logoActual = lsGet('granjaLogo');
   cont.innerHTML = `
@@ -1526,11 +1560,12 @@ function renderAdminRespaldo(cont) {
   if (resetBtn) resetBtn.onclick = () => {
     lsSet('granjaLogo', '');
     ['clientTopLogo', 'adminTopLogo'].forEach(id => setLogoEl($(id)));
+    updateAuthLogo();
     renderAdminRespaldo(cont);
   };
 }
 
-// ========== SUPER ADMIN (igual) ==========
+// ========== SUPER ADMIN ==========
 async function renderAdminAdmins(cont) {
   cont.innerHTML = '<div class="loader">Cargando...</div>';
   try {
